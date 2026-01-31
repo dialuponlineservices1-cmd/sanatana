@@ -3,25 +3,40 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { PostContent, PanchangamData, JathakamResult, OutputMode, SamsayaResult, NumerologyResult, RaasiResult } from "../types";
 
 /**
- * Creates a fresh AI instance for every call.
- * Essential for picking up environment variable changes in Vercel without manual refresh.
+ * Ensures the API Key is fresh and handled as a runtime constant where possible.
  */
 const getAI = () => {
   const apiKey = process.env.API_KEY;
   if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    throw new Error("API_KEY_MISSING: దయచేసి Vercel Settings లో API_KEY సెట్ చేయబడిందో లేదో తనిఖీ చేయండి.");
+    throw new Error("API_KEY_MISSING");
   }
   return new GoogleGenAI({ apiKey });
 };
 
+/**
+ * Advanced JSON cleaner to handle:
+ * 1. Markdown code blocks (```json ... ```)
+ * 2. Conversational prefix/suffix
+ * 3. Escaped characters
+ */
 const cleanJSONResponse = (text: string): string => {
   if (!text) return "{}";
-  try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    return jsonMatch ? jsonMatch[0] : text.trim();
-  } catch (e) {
-    return "{}";
+  let cleaned = text.trim();
+  
+  // Remove markdown code blocks if present
+  if (cleaned.includes("```")) {
+    cleaned = cleaned.replace(/```json/g, "").replace(/```/g, "").trim();
   }
+  
+  // Extract only the part between the first { and last }
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    return cleaned.substring(firstBrace, lastBrace + 1);
+  }
+  
+  return cleaned;
 };
 
 async function callGemini(params: {
@@ -31,47 +46,49 @@ async function callGemini(params: {
   usePro?: boolean;
 }) {
   const ai = getAI();
-  const primaryModel = params.usePro ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
-  const fallbackModel = 'gemini-3-flash-preview';
   
-  const modelsToTry = [primaryModel];
-  if (primaryModel !== fallbackModel) modelsToTry.push(fallbackModel);
+  // High availability model fallback chain
+  const models = params.usePro 
+    ? ['gemini-3-pro-preview', 'gemini-3-flash-preview', 'gemini-flash-lite-latest']
+    : ['gemini-3-flash-preview', 'gemini-flash-lite-latest'];
 
   let lastError: any = null;
 
-  for (const modelName of modelsToTry) {
+  for (const modelName of models) {
     try {
+      console.log(`Attempting with model: ${modelName}`);
       const response = await ai.models.generateContent({
         model: modelName,
         contents: [{ parts: [{ text: params.contents }] }],
         config: {
-          systemInstruction: params.systemInstruction,
+          systemInstruction: params.systemInstruction || "You are a professional Vedic scholar. Always output valid JSON in Telugu.",
           responseMimeType: 'application/json',
           responseSchema: params.schema,
-          // Reserve thinking budget for Pro models to get high-quality reasoning
           thinkingConfig: modelName.includes('pro') ? { thinkingBudget: 16384 } : undefined
         }
       });
 
-      const text = cleanJSONResponse(response.text ?? "{}");
-      return JSON.parse(text);
+      const rawText = response.text || "{}";
+      const cleanedText = cleanJSONResponse(rawText);
+      return JSON.parse(cleanedText);
     } catch (err: any) {
       lastError = err;
-      console.warn(`Request failed with ${modelName}:`, err.message);
+      console.warn(`Model ${modelName} failed:`, err.message);
       
-      // Stop retrying if the key is explicitly denied or usage is over limit
+      // If it's a critical auth or quota error, don't bother retrying
       if (err.message?.includes('403') || err.message?.includes('429')) {
         throw err;
       }
+      // Otherwise, loop continues to the next fallback model
     }
   }
 
-  throw lastError || new Error("సర్వర్‌తో కనెక్షన్ ఏర్పడలేదు. దయచేసి నెట్వర్క్ తనిఖీ చేయండి.");
+  throw lastError || new Error("అన్ని AI సర్వర్లు బిజీగా ఉన్నాయి. దయచేసి మళ్ళీ ప్రయత్నించండి.");
 }
 
 export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResult> => {
   return await callGemini({
-    contents: `Detailed Vedic Horoscope for ${raasi} in Telugu for today.`,
+    contents: `Detailed Vedic Horoscope for ${raasi} raasi for today in Telugu.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -89,7 +106,7 @@ export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResul
 
 export const generateNumerologyReport = async (name: string, dob: string): Promise<NumerologyResult> => {
   return await callGemini({
-    contents: `Numerology destiny report for ${name} born on ${dob} in Telugu script.`,
+    contents: `Deep Numerology Analysis for ${name} born on ${dob} in Telugu script.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -108,7 +125,7 @@ export const generateNumerologyReport = async (name: string, dob: string): Promi
 export const generateFullJathakam = async (name: string, dob: string, time: string, place: string): Promise<JathakamResult> => {
   return await callGemini({
     usePro: true,
-    contents: `Full Vedic Jathakam Analysis (Birth Chart) for ${name}, DOB: ${dob}, Time: ${time}, Place: ${place}. Output scholarly Telugu.`,
+    contents: `Complete Vedic Birth Chart (Jathakam) for ${name}, Born: ${dob} at ${time} in ${place}. Scholarly Telugu.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -143,8 +160,7 @@ export const generateSpiritualPost = async (
 ): Promise<PostContent> => {
   return await callGemini({
     usePro: true,
-    systemInstruction: "You are a Supreme Dharmic Scholar. Output only clean JSON in Telugu script. Avoid conversational filler.",
-    contents: `Task: ${outputMode}. Subject: ${prompt}. Category: ${category}. Sloka: ${includeSloka}. Formatting: Royal Poster.`,
+    contents: `Task: ${outputMode}. Category: ${category}. Topic: ${prompt}. Sloka: ${includeSloka}. Output MUST be valid JSON.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -166,7 +182,7 @@ export const generateSpiritualPost = async (
 export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
   return await callGemini({
     usePro: true,
-    contents: `Solve spiritual doubt: ${query} using scripture in Telugu.`,
+    contents: `Solve spiritual doubt using Vedic context: ${query} in Telugu script.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -186,7 +202,7 @@ export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
 
 export const getDailyPanchangam = async (date: string): Promise<PanchangamData> => {
   return await callGemini({
-    contents: `Daily Telugu Panchangam for ${date}. Accurate planetary nodes.`,
+    contents: `Full Telugu Panchangam for ${date}. Include Rahukalam, Abhijit and Specialty.`,
     schema: {
       type: Type.OBJECT,
       properties: {

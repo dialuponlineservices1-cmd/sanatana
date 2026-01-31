@@ -15,30 +15,15 @@ import LiveConsultation from './components/LiveConsultation';
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.GENERATOR);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [hasKey, setHasKey] = useState(true);
+  const [keyError, setKeyError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check for API key in AI Studio environment or local process
-    const checkKey = async () => {
-      if (window.aistudio) {
-        const selected = await window.aistudio.hasSelectedApiKey();
-        setHasKey(selected);
-      } else if (!process.env.API_KEY) {
-        // If deployed to Vercel without key, this triggers
-        console.warn("API_KEY not found in environment.");
-      }
-    };
-    checkKey();
-  }, []);
-
-  const handleOpenKeyDialog = async () => {
-    if (window.aistudio) {
-      await window.aistudio.openSelectKey();
-      setHasKey(true);
-    } else {
-      alert("Vercel లో మోహరించినప్పుడు, దయచేసి ప్రాజెక్ట్ సెట్టింగ్స్‌లో ఎన్విరాన్మెంట్ వేరియబుల్స్ సెట్ చేయండి.");
+    // Check if the API key was successfully injected during Vite build
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === "" || apiKey === "undefined") {
+      setKeyError("Vercel లో API_KEY సెట్ చేసిన తర్వాత 'Redeploy' చేయడం మర్చిపోకండి.");
     }
-  };
+  }, []);
 
   const navItems = [
     { tab: AppTab.GENERATOR, icon: 'dashboard_customize', label: 'డిజైన్ స్టూడియో', color: 'bg-orange-600' },
@@ -57,22 +42,21 @@ const App: React.FC = () => {
     { tab: AppTab.BRANDING, icon: 'settings', label: 'ప్రొఫైల్ సెట్టింగ్స్', color: 'bg-slate-600' }
   ];
 
-  if (!hasKey) {
+  if (keyError) {
     return (
       <div className="flex flex-col items-center justify-center h-screen bg-[#020617] p-10 text-center space-y-12">
-        <div className="w-40 h-40 bg-orange-600 rounded-[3rem] flex items-center justify-center shadow-2xl animate-bounce">
-          <span className="material-icons text-white text-[100px]">vpn_key</span>
+        <div className="w-40 h-40 bg-red-600 rounded-[3rem] flex items-center justify-center shadow-2xl animate-pulse">
+          <span className="material-icons text-white text-[100px]">error_outline</span>
         </div>
-        <h1 className="text-7xl font-black tiro text-white leading-tight">API కీ అవసరం (Key Required)</h1>
-        <p className="text-slate-400 text-3xl tiro max-w-4xl">
-          అత్యాధునిక AI సేవలు పొందడానికి దయచేసి మీ కీని ఎంచుకోండి. 
+        <h1 className="text-7xl font-black tiro text-white leading-tight">API కీ లోపం! (Configuration Error)</h1>
+        <p className="text-slate-400 text-3xl tiro max-w-4xl bg-white/5 p-10 rounded-[3rem] border border-white/10">
+          {keyError}<br/><br/>
+          <span className="text-orange-500 font-black">పరిష్కారం:</span> Vercel Dashboard -> Deployments -> (...) క్లిక్ చేయండి -> <span className="underline italic">Redeploy</span> సెలెక్ట్ చేయండి.
         </p>
-        <button 
-          onClick={handleOpenKeyDialog}
-          className="px-24 py-10 bg-orange-600 text-white rounded-full font-black cinzel text-4xl shadow-2xl hover:bg-orange-500 transition-all border-b-[16px] border-orange-950"
-        >
-          CONNECT API KEY
-        </button>
+        <div className="flex gap-8">
+           <button onClick={() => window.location.reload()} className="px-16 py-8 bg-slate-800 text-white rounded-full font-black cinzel text-3xl hover:bg-slate-700 transition-all">REFRESH PAGE</button>
+           <a href="https://vercel.com" target="_blank" className="px-16 py-8 bg-orange-600 text-white rounded-full font-black cinzel text-3xl shadow-2xl hover:bg-orange-500 transition-all border-b-[16px] border-orange-950">GO TO VERCEL</a>
+        </div>
       </div>
     );
   }
@@ -126,7 +110,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-8">
              <div className="flex flex-col items-end">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">BHASKARA PRO STUDIO</p>
-                <p className="text-xl font-black text-orange-500 cinzel">v5.0.0-PRO LIVE</p>
+                <p className="text-xl font-black text-orange-500 cinzel">v5.0.1-VEE LIVE</p>
              </div>
              <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-orange-500 shadow-inner">
                 <span className="material-icons text-3xl">record_voice_over</span>
