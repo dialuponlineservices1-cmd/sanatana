@@ -8,76 +8,103 @@ import AIChat from './components/AIChat';
 import BrandingSettings from './components/BrandingSettings';
 import SamsayaSolver from './components/SamsayaSolver';
 import RishiHub from './components/RishiHub';
+import RaasiPhalalu from './components/RaasiPhalalu';
+import NumerologyHub from './components/NumerologyHub';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.GENERATOR);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const navItems = [
-    { tab: AppTab.GENERATOR, icon: 'auto_fix_high', label: 'డిజైన్ స్టూడియో', color: 'bg-orange-600' },
-    { tab: AppTab.SAMSAYA_SAMADHANAM, icon: 'help_center', label: 'ధర్మ సందేహం', color: 'bg-indigo-700' },
-    { tab: AppTab.RISHI_HUB, icon: 'self_improvement', label: 'మహర్షి విజ్ఞానం', color: 'bg-emerald-700' },
-    { tab: AppTab.DHARMA_HUB, icon: 'auto_awesome', label: 'హిందూ ధర్మం', color: 'bg-amber-600' },
-    { tab: AppTab.SANATANA_DHARMA, icon: 'temple_hindu', label: 'సనాతన ధర్మం', color: 'bg-red-700' },
-    { tab: AppTab.VASTU, icon: 'architecture', label: 'వాస్తు శాస్త్రం', color: 'bg-stone-700' },
-    { tab: AppTab.MORAL_STORIES, icon: 'menu_book', label: 'నీతి కథలు', color: 'bg-emerald-600' },
-    { tab: AppTab.PANDUGALU, icon: 'celebration', label: 'పండుగలు', color: 'bg-pink-600' },
-    { tab: AppTab.LIBRARY, icon: 'library_books', label: 'గ్రంథాలయం', color: 'bg-indigo-600' },
-    { tab: AppTab.PANCHANGAM, icon: 'flare', label: 'పంచాంగం', color: 'bg-yellow-600' },
-    { tab: AppTab.AI_CHAT, icon: 'psychology', label: 'ఋషి AI చాట్', color: 'bg-sky-600' },
-    { tab: AppTab.BRANDING, icon: 'contact_page', label: 'ప్రొఫైల్ సెట్టింగ్స్', color: 'bg-rose-600' }
+    { tab: AppTab.GENERATOR, icon: 'dashboard_customize', label: 'డిజైన్ స్టూడియో', color: 'bg-orange-600' },
+    { tab: AppTab.RAASI_PHALALU, icon: 'brightness_7', label: 'రాశి ఫలాలు', color: 'bg-purple-700' },
+    { tab: AppTab.NUMEROLOGY, icon: 'calculate', label: 'సంఖ్యాశాస్త్రం', color: 'bg-cyan-700' },
+    { tab: AppTab.NITHI_KATHALU, icon: 'balance', label: 'నీతి కథలు', color: 'bg-amber-700' },
+    { tab: AppTab.PILLALA_KATHALU, icon: 'child_care', label: 'పిల్లల కథలు', color: 'bg-emerald-600' },
+    { tab: AppTab.MOTIVATIONAL_KATHALU, icon: 'bolt', label: 'స్ఫూర్తి కథలు', color: 'bg-rose-700' },
+    { tab: AppTab.PANDUGALU, icon: 'festival', label: 'పండుగలు - విశేషాలు', color: 'bg-pink-600' },
+    { tab: AppTab.PANCHANGAM, icon: 'calendar_month', label: 'పంచాంగం', color: 'bg-yellow-600' },
+    { tab: AppTab.SAMSAYA_SAMADHANAM, icon: 'psychology_alt', label: 'ధర్మ సందేహం', color: 'bg-indigo-700' },
+    { tab: AppTab.RISHI_HUB, icon: 'history_edu', label: 'మహర్షి విజ్ఞానం', color: 'bg-emerald-700' },
+    { tab: AppTab.DHARMA_HUB, icon: 'hub', label: 'హిందూ ధర్మం', color: 'bg-amber-600' },
+    { tab: AppTab.VASTU, icon: 'vashist', label: 'వాస్తు శాస్త్రం', color: 'bg-stone-700' },
+    { tab: AppTab.LIBRARY, icon: 'menu_book', label: 'గ్రంథాలయం', color: 'bg-indigo-600' },
+    { tab: AppTab.AI_CHAT, icon: 'chat_bubble', label: 'ఋషి AI చాట్', color: 'bg-sky-600' },
+    { tab: AppTab.BRANDING, icon: 'settings', label: 'ప్రొఫైల్ సెట్టింగ్స్', color: 'bg-slate-600' }
   ];
 
   return (
-    <div className="flex h-screen bg-[#FFFDF5] overflow-hidden">
-      <aside className={`${isSidebarOpen ? 'w-[450px]' : 'w-24'} bg-white border-r-8 border-orange-100 transition-all duration-500 flex flex-col z-30 shadow-2xl`}>
-        <div className="p-10 flex items-center gap-6 border-b-4 border-orange-50">
-          <div className="w-20 h-20 bg-orange-600 rounded-2xl flex items-center justify-center shadow-2xl shrink-0">
-            <span className="material-icons text-white text-4xl">temple_hindu</span>
+    <div className="flex h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans">
+      {/* PROFESSIONAL SIDEBAR */}
+      <aside className={`${isSidebarOpen ? 'w-[420px]' : 'w-24'} bg-[#0f172a] border-r border-slate-800 transition-all duration-500 flex flex-col z-30 shadow-[20px_0_50px_rgba(0,0,0,0.5)] overflow-hidden`}>
+        <div className="p-10 flex items-center gap-6 border-b border-slate-800/50 bg-[#1e293b]/30">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg shrink-0">
+            <span className="material-icons text-white text-3xl">token</span>
           </div>
           {isSidebarOpen && (
-            <div>
-              <h1 className="cinzel font-black text-3xl text-orange-800 tracking-tighter leading-none">SANATANA PRO</h1>
-              <p className="text-[12px] font-bold text-orange-400 uppercase tracking-widest mt-2">ULTIMATE DIVINE HUB</p>
+            <div className="overflow-hidden">
+              <h1 className="cinzel font-black text-2xl text-orange-500 tracking-tighter leading-none whitespace-nowrap">BHASKARA PRO</h1>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">INTERNAL COMMAND CENTER</p>
             </div>
           )}
         </div>
-        <nav className="flex-1 px-8 py-12 space-y-4 overflow-y-auto custom-scroll">
+        
+        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto custom-scroll">
           {navItems.map((item) => (
             <button
               key={item.tab}
               onClick={() => setActiveTab(item.tab)}
-              className={`flex items-center gap-8 px-8 py-6 rounded-[3rem] transition-all w-full group ${
-                activeTab === item.tab ? `${item.color} text-white shadow-2xl scale-[1.05]` : 'text-stone-500 hover:bg-orange-50'
+              className={`flex items-center gap-6 px-6 py-4 rounded-2xl transition-all w-full group relative ${
+                activeTab === item.tab 
+                  ? `${item.color} text-white shadow-xl scale-[1.02] font-black` 
+                  : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
               }`}
             >
-              <span className={`material-icons text-4xl ${activeTab === item.tab ? 'text-white' : 'text-stone-400 group-hover:text-orange-500'}`}>{item.icon}</span>
-              {isSidebarOpen && <span className="font-black tiro text-2xl whitespace-nowrap">{item.label}</span>}
+              <span className={`material-icons text-3xl ${activeTab === item.tab ? 'text-white' : 'text-slate-500 group-hover:text-orange-400'}`}>{item.icon}</span>
+              {isSidebarOpen && <span className="tiro text-xl whitespace-nowrap">{item.label}</span>}
+              {activeTab === item.tab && <div className="absolute left-0 w-1.5 h-8 bg-white rounded-full"></div>}
             </button>
           ))}
         </nav>
       </aside>
 
-      <main className="flex-1 flex flex-col overflow-hidden relative">
-        <header className="h-32 bg-white border-b-8 border-orange-100 flex items-center justify-between px-20 z-20 shadow-sm print:hidden">
-          <div className="flex items-center gap-12">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-orange-400 p-6 hover:bg-orange-50 rounded-3xl transition-all">
-              <span className="material-icons text-6xl">{isSidebarOpen ? 'menu_open' : 'menu'}</span>
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-[#020617]">
+        {/* TOP BAR */}
+        <header className="h-24 bg-[#0f172a]/80 backdrop-blur-xl border-b border-slate-800 flex items-center justify-between px-10 z-20 shadow-lg">
+          <div className="flex items-center gap-8">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-500 p-4 hover:bg-slate-800 rounded-2xl transition-all">
+              <span className="material-icons text-5xl">{isSidebarOpen ? 'keyboard_double_arrow_left' : 'keyboard_double_arrow_right'}</span>
             </button>
-            <h2 className="text-5xl font-black tiro text-orange-800">శ్రీ సనాతన ధర్మ స్టూడియో</h2>
+            <div className="h-10 w-px bg-slate-800"></div>
+            <h2 className="text-3xl font-black tiro text-slate-100 uppercase tracking-tighter">
+              {navItems.find(i => i.tab === activeTab)?.label}
+            </h2>
           </div>
-          <div className="flex items-center gap-10">
-             <div className="text-right">
-                <p className="text-[12px] font-black text-orange-400 uppercase tracking-[0.4em]">Engine Status</p>
-                <p className="text-2xl font-black cinzel text-emerald-600">8K DIVINE ACTIVE</p>
+          
+          <div className="flex items-center gap-8">
+             <div className="flex flex-col items-end">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Divine Studio Hub</p>
+                <p className="text-xl font-black text-orange-500 cinzel">PRO v4.8 INTERNAL</p>
              </div>
-             <div className="w-6 h-6 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_25px_rgba(16,185,129,0.7)]"></div>
+             <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-orange-500 shadow-inner">
+                <span className="material-icons text-3xl">collections_bookmark</span>
+             </div>
           </div>
         </header>
 
-        <section className="flex-1 overflow-y-auto p-16 relative custom-scroll print:p-0">
-          <div className="max-w-[2000px] mx-auto">
-            {(activeTab === AppTab.GENERATOR || activeTab === AppTab.DHARMA_HUB || activeTab === AppTab.SANATANA_DHARMA || activeTab === AppTab.VASTU || activeTab === AppTab.MORAL_STORIES || activeTab === AppTab.PANDUGALU) && (
+        {/* CONTENT AREA */}
+        <section className="flex-1 overflow-y-auto p-12 relative custom-scroll bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617]">
+          <div className="max-w-[1800px] mx-auto">
+            {activeTab === AppTab.RAASI_PHALALU && <RaasiPhalalu />}
+            {activeTab === AppTab.NUMEROLOGY && <NumerologyHub />}
+            {(activeTab === AppTab.GENERATOR || 
+              activeTab === AppTab.DHARMA_HUB || 
+              activeTab === AppTab.SANATANA_DHARMA || 
+              activeTab === AppTab.VASTU || 
+              activeTab === AppTab.NITHI_KATHALU || 
+              activeTab === AppTab.PILLALA_KATHALU || 
+              activeTab === AppTab.MOTIVATIONAL_KATHALU || 
+              activeTab === AppTab.PANDUGALU) && (
               <PostGenerator mode={activeTab} />
             )}
             {activeTab === AppTab.SAMSAYA_SAMADHANAM && <SamsayaSolver />}

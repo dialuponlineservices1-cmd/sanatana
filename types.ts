@@ -1,15 +1,17 @@
 
 export enum AppTab {
   GENERATOR = 'GENERATOR',
+  RAASI_PHALALU = 'RAASI_PHALALU',
+  NUMEROLOGY = 'NUMEROLOGY',
+  NITHI_KATHALU = 'NITHI_KATHALU',       // New: Moral Stories
+  PILLALA_KATHALU = 'PILLALA_KATHALU',   // New: Kids Stories
+  MOTIVATIONAL_KATHALU = 'MOTIVATIONAL_KATHALU', // New: Inspiring Stories
   DHARMA_HUB = 'DHARMA_HUB',
   SANATANA_DHARMA = 'SANATANA_DHARMA',
   SAMSAYA_SAMADHANAM = 'SAMSAYA_SAMADHANAM',
   RISHI_HUB = 'RISHI_HUB',
   VASTU = 'VASTU',
-  MORAL_STORIES = 'MORAL_STORIES',
-  KIDS_STORIES = 'KIDS_STORIES',
   PANDUGALU = 'PANDUGALU',
-  SPECIAL_DAYS = 'SPECIAL_DAYS',
   LIBRARY = 'LIBRARY',
   PANCHANGAM = 'PANCHANGAM',
   AI_CHAT = 'AI_CHAT',
@@ -38,8 +40,8 @@ export interface PostContent {
 
 export interface SamsayaResult {
   problemSummary: string;
-  scriptureSource: string; // Ramayana / Mahabharatha / Gita
-  context: string; // Historical event context
+  scriptureSource: string;
+  context: string;
   sloka: string;
   meaning: string;
   solution: string;
@@ -79,15 +81,6 @@ export interface Maharshi {
   description: string;
 }
 
-export interface Temple {
-  id: string;
-  name: string;
-  teluguName: string;
-  icon: string;
-  description: string;
-  location: string;
-}
-
 export interface PanchangamData {
   date: string;
   teluguYear: string;
@@ -108,12 +101,27 @@ export interface PanchangamData {
   specialty?: string;
 }
 
+export interface NumerologyResult {
+  birthNumber: number;
+  destinyNumber: number;
+  description: string;
+  luckyColors: string;
+  luckyDays: string;
+  remedies: string;
+}
+
+export interface RaasiResult {
+  raasi: string;
+  prediction: string;
+  health: string;
+  wealth: string;
+  luckyNumber: string;
+  remedy: string;
+}
+
 export interface JathakamResult {
   personalDetails: {
     name: string;
-    dob: string;
-    time: string;
-    place: string;
   };
   panchangam: {
     tithi: string;
@@ -128,4 +136,14 @@ export interface JathakamResult {
     health: string;
     remedies: string;
   };
+}
+
+export interface ClientRecord {
+  id: string;
+  name: string;
+  dob: string;
+  time: string;
+  place: string;
+  notes: string;
+  timestamp: number;
 }

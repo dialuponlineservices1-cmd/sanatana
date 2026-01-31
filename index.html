@@ -5,6 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>శ్రీ సనాతన ధర్మ స్టూడియో | Sri Sanatana Dharma Studio Pro (8K)</title>
+    
+    <!-- Primary Meta Tags -->
+    <meta name="title" content="శ్రీ సనాతన ధర్మ స్టూడియో | Sri Sanatana Dharma Studio Pro">
+    <meta name="description" content="Ultimate Vedic Content Hub for Sanatana Dharma, Astrology, and Rishi Wisdom.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="శ్రీ సనాతన ధర్మ స్టూడియో Pro">
+    <meta property="og:description" content="Generate 8K Divine Posters and solve spiritual doubts instantly.">
+    <meta property="og:image" content="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200&h=630&fit=crop">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Tiro+Telugu:ital@0;1&family=Hind:wght@300;400;500;600;700&family=Cinzel:wght@400;500;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -37,16 +48,21 @@
         .cinzel { font-family: 'Cinzel', serif; }
         .tiro { font-family: 'Tiro Telugu', serif; font-weight: 600; line-height: 1.6; }
         
+        .custom-scroll::-webkit-scrollbar { width: 12px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { 
+            background: rgba(255, 153, 51, 0.2); 
+            border-radius: 20px;
+            border: 4px solid transparent;
+            background-clip: content-box;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 153, 51, 0.5); }
+
         .gold-text {
             background: var(--gold-shine);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-        }
-
-        .saffron-gradient {
-            background: linear-gradient(135deg, #FF9933 0%, #FFCC00 100%);
         }
 
         /* Cinematic Background */
@@ -79,31 +95,9 @@
             to { transform: scale(1.1) translate(2%, 2%); }
         }
 
-        /* Premium Light Scrollbar */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: #FDF5E6; }
-        ::-webkit-scrollbar-thumb { 
-            background: linear-gradient(to bottom, #FFD700, #FF9933); 
-            border-radius: 20px; 
-            border: 2px solid #FDF5E6;
-        }
-
-        .premium-card {
-            background: white;
-            border: 1px solid rgba(255, 153, 51, 0.2);
-            box-shadow: 0 20px 40px -10px rgba(139, 69, 19, 0.1);
-        }
-
-        .premium-card:hover {
-            border-color: var(--primary-saffron);
-            transform: translateY(-5px);
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .divider-saffron {
-            height: 4px;
-            background: linear-gradient(90deg, transparent, #FF9933, transparent);
-            margin: 20px 0;
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
         }
     </style>
     <script type="importmap">
@@ -118,8 +112,8 @@
     </script>
 </head>
 <body>
-    <div class="cosmic-bg"></div>
-    <div class="nebula"></div>
+    <div class="cosmic-bg no-print"></div>
+    <div class="nebula no-print"></div>
     <div id="root"></div>
 </body>
 </html>
