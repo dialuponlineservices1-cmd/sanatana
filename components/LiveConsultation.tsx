@@ -1,6 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob } from '@google/genai';
+import { getApiKey } from '../services/geminiService';
 
 const LiveConsultation: React.FC = () => {
   const [isActive, setIsActive] = useState(false);
@@ -54,7 +55,6 @@ const LiveConsultation: React.FC = () => {
     const l = data.length;
     const int16 = new Int16Array(l);
     for (let i = 0; i < l; i++) {
-      // Clamp values to prevent distortion
       int16[i] = Math.max(-1, Math.min(1, data[i])) * 32767;
     }
     return {
@@ -66,7 +66,14 @@ const LiveConsultation: React.FC = () => {
   const startSession = async () => {
     try {
       setStatus('కనెక్ట్ అవుతోంది...');
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const apiKey = getApiKey();
+      if (!apiKey) {
+        alert("దయచేసి ప్రొఫైల్ సెట్టింగ్స్‌లో API Key ఇవ్వండి.");
+        setStatus('సిద్ధంగా ఉంది (Idle)');
+        return;
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
       
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) {
@@ -127,9 +134,13 @@ const LiveConsultation: React.FC = () => {
               nextStartTimeRef.current = 0;
             }
           },
-          onerror: (e) => {
+          onerror: (e: any) => {
             console.error('Session Error:', e);
+            if (e.message?.includes('429')) {
+              alert("API Limit దాటిపోయింది. దయచేసి కాసేపు ఆగి మళ్ళీ కనెక్ట్ చేయండి.");
+            }
             setStatus('కనెక్షన్ విఫలమైంది (Error)');
+            setIsActive(false);
           },
           onclose: () => {
             setStatus('ముగిసింది (Closed)');
@@ -147,8 +158,9 @@ const LiveConsultation: React.FC = () => {
       });
 
       sessionRef.current = await sessionPromise;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Start Session Failed:', err);
+      alert("లైవ్ కనెక్షన్ ప్రారంభించలేకపోయాము. దయచేసి మీ ఇంటర్నెట్ మరియు API Key చెక్ చేయండి.");
       setStatus('ప్రారంభించలేకపోయాము (Failed)');
     }
   };
@@ -226,18 +238,6 @@ const LiveConsultation: React.FC = () => {
             </button>
           )}
         </div>
-      </div>
-
-      <div className="bg-orange-950/20 border-4 border-orange-900/30 rounded-[5rem] p-12 space-y-8 shadow-xl">
-         <h4 className="text-4xl font-black tiro text-orange-500 flex items-center gap-6">
-            <span className="material-icons text-5xl">info_outline</span> దివ్య సూచనలు (Instructions)
-         </h4>
-         <ul className="text-2xl md:text-3xl tiro text-slate-400 space-y-6 list-disc pl-12 font-bold leading-relaxed">
-            <li>మైక్రోఫోన్ అనుమతి (Access) అడిగినప్పుడు 'Allow' క్లిక్ చేయండి.</li>
-            <li>నిశ్శబ్ద వాతావరణంలో ఉంటే ఫలితాలు మెరుగ్గా ఉంటాయి.</li>
-            <li>ప్రశ్న అడిగిన తర్వాత కొద్దిసేపు వేచి ఉండండి, ఋషి సమాధానం ఇస్తారు.</li>
-            <li>మీ సంభాషణ పూర్తిగా గోప్యంగా ఉంటుంది.</li>
-         </ul>
       </div>
     </div>
   );

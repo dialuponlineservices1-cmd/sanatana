@@ -10,39 +10,57 @@ import RishiHub from './components/RishiHub';
 import RaasiPhalalu from './components/RaasiPhalalu';
 import NumerologyHub from './components/NumerologyHub';
 import LiveConsultation from './components/LiveConsultation';
+import HinduCalendarHub from './components/HinduCalendarHub';
+import BhagavadGitaHub from './components/BhagavadGitaHub'; // New
 import { validateApiKey, getApiKey } from './services/geminiService';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.GENERATOR);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [apiKeyStatus, setApiKeyStatus] = useState<{valid: boolean | null, msg: string, color: string}>({
+  const [apiKeyStatus, setApiKeyStatus] = useState<{valid: boolean | null, msg: string, color: string, source: string}>({
     valid: null, 
     msg: 'Checking API Status...', 
-    color: 'text-slate-500'
+    color: 'text-slate-500',
+    source: ''
   });
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
   const lastKeyRef = useRef<string>("");
+  const lastCheckTimeRef = useRef<number>(0);
 
   useEffect(() => {
-    const checkKey = async () => {
+    const checkKey = async (force: boolean = false) => {
       const currentKey = getApiKey();
-      if (currentKey !== lastKeyRef.current) {
+      const now = Date.now();
+      
+      if (force || currentKey !== lastKeyRef.current || (now - lastCheckTimeRef.current > 600000)) {
         lastKeyRef.current = currentKey;
+        lastCheckTimeRef.current = now;
+        const source = "System Key";
+        
         if (currentKey && currentKey.length > 10) {
-          const valid = await validateApiKey(currentKey);
-          if (valid) {
-            setApiKeyStatus({ valid: true, msg: 'API సిద్ధంగా ఉంది (Active)', color: 'text-emerald-500' });
-          } else {
-            setApiKeyStatus({ valid: false, msg: 'తప్పు API కీ (Invalid Key)', color: 'text-red-500' });
+          try {
+            const valid = await validateApiKey(currentKey);
+            if (valid) {
+              setApiKeyStatus({ valid: true, msg: 'Active', color: 'text-emerald-500', source });
+            } else {
+              setApiKeyStatus({ valid: false, msg: 'Invalid Key', color: 'text-red-500', source });
+            }
+          } catch (e: any) {
+            if (e.message === "API_LIMIT") {
+              setApiKeyStatus({ valid: true, msg: 'Limit Reached', color: 'text-orange-500', source });
+            } else {
+              setApiKeyStatus({ valid: false, msg: 'Key Error', color: 'text-red-500', source });
+            }
           }
         } else {
-          setApiKeyStatus({ valid: false, msg: 'API కీ అవసరం (Key Required)', color: 'text-orange-500' });
+          setApiKeyStatus({ valid: false, msg: 'Key Required', color: 'text-orange-500', source });
         }
       }
     };
-    checkKey();
-    const interval = setInterval(checkKey, 30000);
+
+    checkKey(true);
+    const interval = setInterval(() => checkKey(false), 300000);
     return () => clearInterval(interval);
   }, []);
 
@@ -61,14 +79,6 @@ const App: React.FC = () => {
       setIsUnlocked(true);
     }
   }, []);
-
-  const handleEnterKey = async () => {
-    const manualKey = window.prompt("Gemini API Key ఎంటర్ చేయండి:");
-    if (manualKey) {
-      localStorage.setItem('internal_api_key', manualKey.trim());
-      window.location.reload();
-    }
-  };
 
   if (!isUnlocked) {
     return (
@@ -93,10 +103,6 @@ const App: React.FC = () => {
              />
              <button type="submit" className="w-full py-10 bg-orange-600 rounded-[3rem] font-black cinzel text-4xl uppercase tracking-widest hover:bg-orange-500 transition-all border-b-[15px] border-orange-950 shadow-3xl active:scale-95">UNLOCK STUDIO</button>
            </form>
-           <div className="flex items-center justify-center gap-4 text-slate-700 font-black uppercase tracking-[0.4em] text-xs">
-              <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
-              Ultra Secure Private Access
-           </div>
         </div>
       </div>
     );
@@ -104,6 +110,8 @@ const App: React.FC = () => {
 
   const navItems = [
     { tab: AppTab.GENERATOR, icon: 'auto_awesome_mosaic', label: '8K డిజైన్ స్టూడియో', color: 'bg-orange-600' },
+    { tab: AppTab.BHAGAVAD_GITA, icon: 'auto_stories', label: 'భగవద్గీత (Daily)', color: 'bg-amber-600' }, // New
+    { tab: AppTab.HINDU_CALENDAR, icon: 'calendar_month', label: 'హిందూ క్యాలెండర్ (Siddipet)', color: 'bg-red-700' },
     { tab: AppTab.RAASI_PHALALU, icon: 'brightness_high', label: 'రాశి ఫలాలు', color: 'bg-purple-700' },
     { tab: AppTab.NUMEROLOGY, icon: 'calculate', label: 'సంఖ్యాశాస్త్రం', color: 'bg-cyan-700' },
     { tab: AppTab.NITHI_KATHALU, icon: 'menu_book', label: 'నీతి కథలు', color: 'bg-amber-700' },
@@ -160,21 +168,11 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-10">
-             <button 
-               onClick={handleEnterKey}
-               className={`flex items-center gap-5 px-10 py-4 rounded-full border-2 transition-all active:scale-95 group relative overflow-hidden ${
-                 apiKeyStatus.valid 
-                  ? 'bg-emerald-500/10 border-emerald-500/40' 
-                  : 'bg-orange-600/10 border-orange-500/40 shadow-[0_0_40px_rgba(234,88,12,0.2)]'
-               }`}
-             >
-                <div className={`w-4 h-4 rounded-full ${apiKeyStatus.valid ? 'bg-emerald-500 shadow-[0_0_20px_#10b981]' : (apiKeyStatus.valid === false ? 'bg-red-500' : 'bg-orange-500 animate-pulse')}`}></div>
-                <div className="text-left relative z-10">
-                  <p className="text-[11px] font-black uppercase tracking-[0.2em] leading-none text-slate-500 mb-1">Engine Status</p>
-                  <p className={`text-xl font-black uppercase tracking-tight ${apiKeyStatus.color}`}>{apiKeyStatus.msg}</p>
-                </div>
-             </button>
-             
+             <div className="flex flex-col items-end">
+                <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest">Calculated for:</span>
+                <span className="text-emerald-500 font-black tiro text-xl">సిద్దిపేట, తెలంగాణ</span>
+             </div>
+             <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-full text-xl font-black text-orange-500">API Status: {apiKeyStatus.msg}</div>
              <button onClick={() => { localStorage.removeItem('hub_access_v3'); window.location.reload(); }} className="p-4 text-slate-600 hover:text-red-500 transition-colors bg-white/5 rounded-2xl">
                 <span className="material-icons text-4xl">logout</span>
              </button>
@@ -185,6 +183,8 @@ const App: React.FC = () => {
           <div className="max-w-[1700px] mx-auto animate-in fade-in slide-in-from-bottom-10 duration-1000">
             {activeTab === AppTab.RAASI_PHALALU && <RaasiPhalalu />}
             {activeTab === AppTab.NUMEROLOGY && <NumerologyHub />}
+            {activeTab === AppTab.HINDU_CALENDAR && <HinduCalendarHub />}
+            {activeTab === AppTab.BHAGAVAD_GITA && <BhagavadGitaHub />}
             {(activeTab === AppTab.GENERATOR || 
               activeTab === AppTab.DHARMA_HUB || 
               activeTab === AppTab.SANATANA_DHARMA || 

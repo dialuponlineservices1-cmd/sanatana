@@ -2,12 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { Branding } from '../types';
 
-interface ExtendedBranding extends Branding {
-  apiKey?: string;
-}
-
 const BrandingSettings: React.FC = () => {
-  const [branding, setBranding] = useState<ExtendedBranding>(() => {
+  const [branding, setBranding] = useState<Branding>(() => {
     const saved = localStorage.getItem('dharma_branding');
     return saved ? JSON.parse(saved) : {
       name: 'పైడిపాటి భాస్కరచార్యులు',
@@ -16,15 +12,11 @@ const BrandingSettings: React.FC = () => {
       location: 'మునగాల - సిద్ధవటం',
       photoUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop',
       qrUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/919492460254',
-      apiKey: ''
     };
   });
 
   useEffect(() => {
     localStorage.setItem('dharma_branding', JSON.stringify(branding));
-    if (branding.apiKey) {
-      localStorage.setItem('internal_api_key', branding.apiKey);
-    }
   }, [branding]);
 
   return (
@@ -72,18 +64,6 @@ const BrandingSettings: React.FC = () => {
                 onChange={e => setBranding({...branding, location: e.target.value})}
                 className="w-full bg-orange-50 border-4 border-orange-100 rounded-[3rem] px-10 py-8 text-3xl tiro focus:border-orange-500 outline-none transition-all shadow-inner"
               />
-            </div>
-            {/* New API Key Field Requested by User */}
-            <div className="space-y-4">
-              <label className="text-xl font-black text-orange-800 uppercase tracking-widest px-6 bg-orange-600 text-white w-fit px-4 py-1 rounded-full mb-2 animate-pulse">Internal Gemini API Key</label>
-              <input 
-                type="password"
-                value={branding.apiKey} 
-                onChange={e => setBranding({...branding, apiKey: e.target.value})}
-                placeholder="AI Studio నుండి పొందిన కీని ఇక్కడ ఇవ్వండి..."
-                className="w-full bg-red-50 border-4 border-red-100 rounded-[3rem] px-10 py-8 text-xl focus:border-red-500 outline-none transition-all shadow-inner"
-              />
-              <p className="text-sm text-red-500 font-bold px-6 italic">గమనిక: ఈ కీ కేవలం ఈ బ్రౌజర్‌లో మాత్రమే సేవ్ చేయబడుతుంది.</p>
             </div>
             <div className="space-y-4">
               <label className="text-xl font-black text-orange-800 uppercase tracking-widest px-6">QR కోడ్ లింక్ (QR URL)</label>

@@ -2,16 +2,12 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { PostContent, PanchangamData, JathakamResult, OutputMode, SamsayaResult, NumerologyResult, RaasiResult } from "../types";
 
+// Global cache to prevent duplicate calls for identical requests
+const responseCache = new Map<string, { data: any, timestamp: number }>();
+const CACHE_TTL = 1000 * 60 * 30; // 30 minutes cache
+
+// Modified to strictly use process.env.API_KEY as per guidelines
 export const getApiKey = () => {
-  const manualKey = localStorage.getItem('internal_api_key');
-  if (manualKey && manualKey.trim() !== "") return manualKey.trim();
-  const brandingStr = localStorage.getItem('dharma_branding');
-  if (brandingStr) {
-    try {
-      const b = JSON.parse(brandingStr);
-      if (b.apiKey && b.apiKey.trim() !== "") return b.apiKey.trim();
-    } catch (e) {}
-  }
   return process.env.API_KEY || "";
 };
 
@@ -23,18 +19,32 @@ const getFreshAI = () => {
 
 export const validateApiKey = async (key: string): Promise<boolean> => {
   if (!key || key.length < 10) return false;
+  
+  // Check local validation cache first
+  const cacheKey = `val_${key.substring(0, 10)}`;
+  const cachedVal = localStorage.getItem(cacheKey);
+  if (cachedVal) {
+    const { valid, timestamp } = JSON.parse(cachedVal);
+    if (Date.now() - timestamp < 3600000) return valid; // Valid for 1 hour
+  }
+
   try {
     const ai = new GoogleGenAI({ apiKey: key });
-    // Quick probe to test key validity
     await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: 'test',
-      config: { maxOutputTokens: 1 }
+      model: 'gemini-3-flash-preview', 
+      contents: 'hi',
+      config: { 
+        maxOutputTokens: 1,
+        thinkingConfig: { thinkingBudget: 0 }
+      }
     });
+    
+    localStorage.setItem(cacheKey, JSON.stringify({ valid: true, timestamp: Date.now() }));
     return true;
   } catch (e: any) {
-    // If it's a 429 (Quota), the key is valid but limited
-    if (e.message?.includes('429')) return true;
+    if (e.message?.includes('429')) {
+      throw new Error("API_LIMIT");
+    }
     return false;
   }
 };
@@ -59,36 +69,54 @@ async function callGemini(params: {
   schema: any;
   usePro?: boolean;
 }) {
-  const ai = getFreshAI();
-  // Using Gemini 3 Pro for deep reasoning if requested, otherwise Flash
-  const modelName = params.usePro ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
-
-  try {
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents: params.contents,
-      config: {
-        systemInstruction: params.systemInstruction || `
-          You are a Divine Vedic Maharshi with infinite wisdom. 
-          Language: Elegant, Scholarly Telugu.
-          Style: Deeply spiritual, revealing hidden secrets (Rahasya).
-          STRICT RULE: Never provide generic definitions. 
-          Example: If asked about Ramayana, do NOT say "It's a story of Rama". 
-          Instead say: "The esoteric secret of the 24,000 verses representing the Gayatri Mantra is..."
-          Focus on facts that are beneficial to humanity and not commonly known.
-        `,
-        responseMimeType: 'application/json',
-        responseSchema: params.schema,
-        thinkingConfig: params.usePro ? { thinkingBudget: 16384 } : undefined
-      }
-    });
-    return JSON.parse(cleanJSONResponse(response.text || "{}"));
-  } catch (err: any) {
-    console.error("Gemini API Error:", err);
-    if (err.message?.includes('429')) throw new Error("API_LIMIT");
-    if (err.message?.includes('403') || err.message?.includes('401')) throw new Error("API_INVALID");
-    throw err;
+  // Generate a unique key for caching based on the request parameters
+  const requestKey = JSON.stringify({ c: params.contents, i: params.systemInstruction });
+  const cached = responseCache.get(requestKey);
+  
+  if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+    console.log("Returning cached Vedic response...");
+    return cached.data;
   }
+
+  const ai = getFreshAI();
+  const modelsToTry = params.usePro 
+    ? ['gemini-3-pro-preview'] 
+    : ['gemini-3-flash-preview', 'gemini-flash-lite-latest'];
+
+  let lastError: any = null;
+
+  for (const modelName of modelsToTry) {
+    try {
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: params.contents,
+        config: {
+          systemInstruction: params.systemInstruction || "You are a Divine Vedic Maharshi. Scholarly Telugu. Reveal hidden secrets.",
+          responseMimeType: 'application/json',
+          responseSchema: params.schema,
+          thinkingConfig: modelName.includes('pro') ? { thinkingBudget: 32768 } : undefined
+        }
+      });
+      
+      const result = JSON.parse(cleanJSONResponse(response.text || "{}"));
+      
+      // Store in cache
+      responseCache.set(requestKey, { data: result, timestamp: Date.now() });
+      return result;
+      
+    } catch (err: any) {
+      lastError = err;
+      if (err.message?.includes('429')) {
+        throw new Error("API_LIMIT");
+      }
+      if (err.message?.includes('403') || err.message?.includes('401')) {
+        throw new Error("API_INVALID");
+      }
+      console.warn(`Model ${modelName} failed, trying next...`);
+    }
+  }
+
+  throw lastError || new Error("UNKNOWN_ERROR");
 }
 
 export const generateSpiritualPost = async (
@@ -99,21 +127,13 @@ export const generateSpiritualPost = async (
   isRahasya: boolean = false,
   outputMode: OutputMode = 'STORY'
 ): Promise<PostContent> => {
-  const isTemplate = outputMode === 'TEMPLATE';
-  
   return await callGemini({
-    usePro: true, // Use Pro for higher quality deep insights
-    contents: `
-      Subject: ${prompt}. Category: ${category}. Mode: ${outputMode}.
-      Reveal a DEEP SACRED SECRET or a VEDIC INSIGHT about this topic.
-      Do not repeat what is commonly known. Use scholarly language.
-      STORY: 1000 words. TEMPLATE: 3-4 Impactful sentences.
-      Keyword: specific high-res atmosphere for Unsplash.
-    `,
+    usePro: true,
+    contents: `Topic: ${prompt}. Category: ${category}. Mode: ${outputMode}. Reveal DEEP SECRETS. JSON output.`,
     schema: {
       type: Type.OBJECT,
       properties: {
-        title: { type: Type.STRING, description: 'Short powerful title (Max 8 words).' },
+        title: { type: Type.STRING },
         subtitle: { type: Type.STRING },
         sloka: { type: Type.STRING },
         body: { type: Type.STRING },
@@ -130,7 +150,7 @@ export const generateSpiritualPost = async (
 
 export const getDailyPanchangam = async (date: string): Promise<PanchangamData> => {
   return await callGemini({
-    contents: `Daily Panchangam for ${date} in Telugu. High precision. JSON.`,
+    contents: `Daily Telugu Panchangam for ${date}. JSON.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -148,7 +168,7 @@ export const getDailyPanchangam = async (date: string): Promise<PanchangamData> 
 export const generateFullJathakam = async (name: string, dob: string, time: string, place: string): Promise<JathakamResult> => {
   return await callGemini({
     usePro: true,
-    contents: `Full Vedic Jathakam for ${name}, ${dob}, ${time}, ${place}. JSON.`,
+    contents: `Vedic Jathakam: ${name}, ${dob}. JSON.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -185,7 +205,7 @@ export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResul
 
 export const generateNumerologyReport = async (name: string, dob: string): Promise<NumerologyResult> => {
   return await callGemini({
-    contents: `Numerology for ${name} ${dob}. JSON.`,
+    contents: `Numerology ${name} ${dob}. JSON.`,
     schema: {
       type: Type.OBJECT,
       properties: {

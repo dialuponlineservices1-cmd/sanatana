@@ -4,8 +4,6 @@ import { generateSpiritualPost } from '../services/geminiService';
 import { PostContent, AppTab, OutputMode } from '../types';
 import { SCRIPTURES, MAHARSHIS_LIST, FESTIVALS_LIST, VASTU_LIST, BIG_THREE_LIST, RAMAYANA_SECTIONS, MAHABHARATHA_SECTIONS, GITA_SECTIONS, NITHI_KATHALU_LIST } from '../constants';
 
-// Note: To support 8K download in-browser without external heavy libs, 
-// we use a scaling trick with the existing DOM.
 const PostGenerator: React.FC<{ mode: AppTab }> = ({ mode }) => {
   const [loading, setLoading] = useState(false);
   const [post, setPost] = useState<PostContent | null>(null);
@@ -82,7 +80,16 @@ const PostGenerator: React.FC<{ mode: AppTab }> = ({ mode }) => {
       });
       setTimeout(() => document.getElementById('result-area')?.scrollIntoView({ behavior: 'smooth' }), 500);
     } catch (e: any) {
-      alert("Connection Error. మీ API Key లిమిట్ దాటి ఉండవచ్చు లేదా ఇంటర్నెట్ సరిగ్గా లేకపోవచ్చు.");
+      if (e.message === "API_LIMIT") {
+        alert("మీ API Key ఉచిత పరిమితి (Limit) దాటిపోయింది. దయచేసి ఒక నిమిషం ఆగి మళ్ళీ ప్రయత్నించండి.");
+      } else if (e.message === "API_INVALID") {
+        alert("మీ API Key తప్పుగా ఉంది లేదా పని చేయడం లేదు. దయచేసి 'ప్రొఫైల్ సెట్టింగ్స్' లో సరైన కీ ఇవ్వండి.");
+      } else if (e.message === "API_KEY_MISSING") {
+        alert("API Key లేదు. దయచేసి 'ప్రొఫైల్ సెట్టింగ్స్' లో కీ ఎంటర్ చేయండి.");
+      } else {
+        alert("సర్వర్ కనెక్షన్ సమస్య. దయచేసి మీ ఇంటర్నెట్ చెక్ చేయండి.");
+        console.error(e);
+      }
     } finally {
       setLoading(false);
       setResearchStep('');
@@ -90,11 +97,6 @@ const PostGenerator: React.FC<{ mode: AppTab }> = ({ mode }) => {
   };
 
   const handleDownloadImage = () => {
-    // For high-res local download without large libraries, 
-    // we instruct the browser to print-to-PDF which preserves 8K vector quality,
-    // or the user can long-press and save. For automatic "8K JPG", 
-    // we use a CSS scale capture approach if library was present.
-    // Here we provide a "Master Image View" for high-res screenshots.
     window.print();
   };
 
