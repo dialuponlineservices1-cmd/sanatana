@@ -38,25 +38,21 @@
 
         body {
             font-family: 'Hind', 'Tiro Telugu', sans-serif;
-            background-color: var(--temple-cream);
-            color: var(--text-ebony);
+            background-color: #020617;
+            color: #e2e8f0;
             margin: 0;
             overflow-x: hidden;
-            font-size: 16px;
         }
 
         .cinzel { font-family: 'Cinzel', serif; }
         .tiro { font-family: 'Tiro Telugu', serif; font-weight: 600; line-height: 1.6; }
         
-        .custom-scroll::-webkit-scrollbar { width: 12px; }
+        .custom-scroll::-webkit-scrollbar { width: 8px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { 
             background: rgba(255, 153, 51, 0.2); 
             border-radius: 20px;
-            border: 4px solid transparent;
-            background-clip: content-box;
         }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255, 153, 51, 0.5); }
 
         .gold-text {
             background: var(--gold-shine);
@@ -65,7 +61,6 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* Cinematic Background */
         .cosmic-bg {
             position: fixed;
             top: 0;
@@ -73,47 +68,28 @@
             width: 100%;
             height: 100%;
             z-index: -2;
-            background: radial-gradient(circle at 50% 50%, #FFFDF5 0%, #FFF8E1 100%);
-        }
-
-        .nebula {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(255, 153, 51, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(178, 34, 34, 0.05) 0%, transparent 50%);
-            filter: blur(80px);
-            animation: nebula-drift 20s ease-in-out infinite alternate;
-        }
-
-        @keyframes nebula-drift {
-            from { transform: scale(1) translate(0, 0); }
-            to { transform: scale(1.1) translate(2%, 2%); }
+            background: #020617;
         }
 
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; }
+            body { background: white !important; color: black !important; }
         }
     </style>
-    <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@^19.2.4",
-        "react/": "https://esm.sh/react@^19.2.4/",
-        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-        "@google/genai": "https://esm.sh/@google/genai@^1.39.0"
-      }
-    }
-    </script>
+<script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react/": "https://esm.sh/react@^19.2.4/"
+  }
+}
+</script>
 </head>
 <body>
     <div class="cosmic-bg no-print"></div>
-    <div class="nebula no-print"></div>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>
