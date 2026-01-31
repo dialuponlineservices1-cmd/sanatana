@@ -1,0 +1,8 @@
+{
+  "name": "Sri Sanatana Dharma Studio Pro",
+  "description": "Premium Vedic Content Hub with Personal Branding and QR integration.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
