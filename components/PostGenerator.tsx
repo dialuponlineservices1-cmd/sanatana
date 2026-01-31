@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { generateSpiritualPost } from '../services/geminiService';
 import { PostContent, AppTab, Branding, OutputMode } from '../types';
 import { SCRIPTURES, MAHARSHIS_LIST, FESTIVALS_LIST, VASTU_LIST, BIG_THREE_LIST, RAMAYANA_SECTIONS, MAHABHARATHA_SECTIONS, GITA_SECTIONS, NITHI_KATHALU_LIST, PILLALA_KATHALU_LIST, MOTIVATIONAL_KATHALU_LIST } from '../constants';
@@ -89,7 +89,7 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
       
       const res = await generateSpiritualPost(topic || context, mode, includeSloka, false, true, targetMode);
 
-      setPost({
+      const postData: PostContent = {
         ...res,
         authorName: b.name || 'పైడిపాటి భాస్కరచార్యులు',
         authorPhone: b.phone || '9492460254',
@@ -97,11 +97,15 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
         qrUrl: b.qrUrl || '',
         authorPhotoUrl: b.photoUrl || '',
         location: b.location || 'మునగాల'
-      });
+      };
+      
+      console.log("Generated Post:", postData);
+      setPost(postData);
       
       setTimeout(() => document.getElementById('result-area')?.scrollIntoView({ behavior: 'smooth' }), 500);
-    } catch (e) {
-      alert("Error generating content.");
+    } catch (e: any) {
+      console.error("Error in handleGenerate:", e);
+      alert("కంటెంట్ జనరేట్ చేయడంలో అంతరాయం కలిగింది. దయచేసి మళ్ళీ ప్రయత్నించండి. (Error: " + (e.message || "Unknown") + ")");
     } finally {
       clearInterval(interval);
       setLoading(false);
@@ -256,7 +260,7 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
                 <div className="p-32 bg-black/40 rounded-[8rem] border-8 border-white/5">
                   <p className="text-white tiro text-[70px] leading-[2.8] font-bold text-justify whitespace-pre-line">{post.body}</p>
                 </div>
-                <div className="p-32 border-l-[50px] border-orange-500 bg-black/60 rounded-r-[8rem] shadow-2xl">
+                <div className="p-32 border-l-[50px] border-orange-50 bg-black/60 rounded-r-[8rem] shadow-2xl">
                   <h4 className="text-6xl font-black tiro text-orange-500 uppercase mb-10">MORAL / MESSAGE</h4>
                   <p className="text-white tiro text-[80px] font-black italic leading-tight">{post.conclusion}</p>
                 </div>
