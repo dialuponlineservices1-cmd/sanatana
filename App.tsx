@@ -10,6 +10,7 @@ import SamsayaSolver from './components/SamsayaSolver';
 import RishiHub from './components/RishiHub';
 import RaasiPhalalu from './components/RaasiPhalalu';
 import NumerologyHub from './components/NumerologyHub';
+import LiveConsultation from './components/LiveConsultation';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.GENERATOR);
@@ -17,6 +18,7 @@ const App: React.FC = () => {
 
   const navItems = [
     { tab: AppTab.GENERATOR, icon: 'dashboard_customize', label: 'డిజైన్ స్టూడియో', color: 'bg-orange-600' },
+    { tab: AppTab.LIVE_CONSULTATION, icon: 'record_voice_over', label: 'లైవ్ కన్సల్టేషన్', color: 'bg-red-600' },
     { tab: AppTab.RAASI_PHALALU, icon: 'brightness_7', label: 'రాశి ఫలాలు', color: 'bg-purple-700' },
     { tab: AppTab.NUMEROLOGY, icon: 'calculate', label: 'సంఖ్యాశాస్త్రం', color: 'bg-cyan-700' },
     { tab: AppTab.NITHI_KATHALU, icon: 'balance', label: 'నీతి కథలు', color: 'bg-amber-700' },
@@ -26,8 +28,6 @@ const App: React.FC = () => {
     { tab: AppTab.PANCHANGAM, icon: 'calendar_month', label: 'పంచాంగం', color: 'bg-yellow-600' },
     { tab: AppTab.SAMSAYA_SAMADHANAM, icon: 'psychology_alt', label: 'ధర్మ సందేహం', color: 'bg-indigo-700' },
     { tab: AppTab.RISHI_HUB, icon: 'history_edu', label: 'మహర్షి విజ్ఞానం', color: 'bg-emerald-700' },
-    { tab: AppTab.DHARMA_HUB, icon: 'hub', label: 'హిందూ ధర్మం', color: 'bg-amber-600' },
-    { tab: AppTab.VASTU, icon: 'vashist', label: 'వాస్తు శాస్త్రం', color: 'bg-stone-700' },
     { tab: AppTab.LIBRARY, icon: 'menu_book', label: 'గ్రంథాలయం', color: 'bg-indigo-600' },
     { tab: AppTab.AI_CHAT, icon: 'chat_bubble', label: 'ఋషి AI చాట్', color: 'bg-sky-600' },
     { tab: AppTab.BRANDING, icon: 'settings', label: 'ప్రొఫైల్ సెట్టింగ్స్', color: 'bg-slate-600' }
@@ -84,10 +84,10 @@ const App: React.FC = () => {
           <div className="flex items-center gap-8">
              <div className="flex flex-col items-end">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Divine Studio Hub</p>
-                <p className="text-xl font-black text-orange-500 cinzel">PRO v4.8 INTERNAL</p>
+                <p className="text-xl font-black text-orange-500 cinzel">PRO v4.9 LIVE</p>
              </div>
              <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-orange-500 shadow-inner">
-                <span className="material-icons text-3xl">collections_bookmark</span>
+                <span className="material-icons text-3xl">record_voice_over</span>
              </div>
           </div>
         </header>
@@ -95,6 +95,7 @@ const App: React.FC = () => {
         {/* CONTENT AREA */}
         <section className="flex-1 overflow-y-auto p-12 relative custom-scroll bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617]">
           <div className="max-w-[1800px] mx-auto">
+            {activeTab === AppTab.LIVE_CONSULTATION && <LiveConsultation />}
             {activeTab === AppTab.RAASI_PHALALU && <RaasiPhalalu />}
             {activeTab === AppTab.NUMEROLOGY && <NumerologyHub />}
             {(activeTab === AppTab.GENERATOR || 
