@@ -68,14 +68,14 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
 
   const handleGenerate = async (targetMode: OutputMode) => {
     if (!topic && !selectedId) {
-      alert("దయచేసి ఒక అంశాన్ని ఎంచుకోండి.");
+      alert("దయచేసి ఒక అంశాన్ని ఎంచుకోండి లేదా వివరించండి.");
       return;
     }
     setLoading(true);
     setPost(null);
     setViewMode(targetMode === 'TEMPLATE' ? 'POSTER' : 'STORY');
     
-    const steps = ["కథా సేకరణ జరుగుతోంది...", "నీతి విశ్లేషణ సిద్ధమవుతోంది...", "దివ్య రూపం దాలుస్తోంది..."];
+    const steps = ["దివ్య సమాచారం సేకరిస్తున్నాం...", "భావజాలం విశ్లేషిస్తున్నాం...", "రూపకల్పన జరుగుతోంది..."];
     let stepIndex = 0;
     const interval = setInterval(() => {
       setResearchStep(steps[stepIndex % steps.length]);
@@ -83,7 +83,9 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
     }, 1500);
 
     try {
-      const b = JSON.parse(localStorage.getItem('dharma_branding') || '{}');
+      const bStr = localStorage.getItem('dharma_branding');
+      const b = bStr ? JSON.parse(bStr) : {};
+      
       const selectedItem = currentList.find(item => item.id === selectedId);
       let context = selectedItem ? (selectedItem.name || selectedItem.teluguName) : mode;
       
@@ -99,13 +101,21 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
         location: b.location || 'మునగాల'
       };
       
-      console.log("Generated Post:", postData);
       setPost(postData);
-      
       setTimeout(() => document.getElementById('result-area')?.scrollIntoView({ behavior: 'smooth' }), 500);
     } catch (e: any) {
-      console.error("Error in handleGenerate:", e);
-      alert("కంటెంట్ జనరేట్ చేయడంలో అంతరాయం కలిగింది. దయచేసి మళ్ళీ ప్రయత్నించండి. (Error: " + (e.message || "Unknown") + ")");
+      console.error("Critical error in handleGenerate:", e);
+      let errorMsg = "క్షమించాలి, కంటెంట్ సిద్ధం చేయలేకపోయాము.";
+      
+      if (e.message?.includes('API_KEY')) {
+        errorMsg += "\n\nగమనిక: మీ API Key చెల్లడం లేదు లేదా Vercel లో సెట్ చేయబడలేదు.";
+      } else if (e.message?.includes('429')) {
+        errorMsg += "\n\nగమనిక: మీ కోటా ముగిసింది. దయచేసి కొద్దిసేపు ఆగి మళ్ళీ ప్రయత్నించండి.";
+      } else {
+        errorMsg += `\n\nవివరాలు: ${e.message || "Unknown Connection Error"}`;
+      }
+      
+      alert(errorMsg);
     } finally {
       clearInterval(interval);
       setLoading(false);
@@ -115,7 +125,6 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
 
   return (
     <div className="flex flex-col items-center gap-16 pb-40 max-w-[1700px] mx-auto w-full">
-      
       <div className={`w-full ${themeColors.bg} border-[12px] ${themeColors.border} rounded-[7rem] p-20 shadow-2xl animate-in fade-in duration-700`}>
         <header className="text-center mb-16">
           <h3 className="text-7xl font-black tiro text-white uppercase tracking-tighter drop-shadow-sm">అంశాన్ని ఎంచుకోండి</h3>
@@ -154,7 +163,7 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
             <textarea 
               value={topic} 
               onChange={e => setTopic(e.target.value)} 
-              placeholder="ఉదాహరణకు: పట్టుదల గురించి లేదా ఒక మంచి నీతి కథ..." 
+              placeholder="ఉదాహరణకు: కష్టపడి పని చేయడం గురించి..." 
               className="w-full bg-[#0f172a] border-[20px] border-slate-800 rounded-[7rem] p-20 text-5xl tiro outline-none focus:border-white/30 shadow-2xl min-h-[350px] text-center leading-relaxed text-white placeholder:text-slate-800 transition-all" 
             />
             <button 
@@ -172,7 +181,7 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
              className={`flex items-center gap-8 px-16 py-8 rounded-full font-black tiro text-4xl transition-all border-4 shadow-xl ${includeSloka ? 'bg-orange-600 border-white text-white' : 'bg-slate-900 border-slate-800 text-slate-500'}`}
            >
               <span className="material-icons text-6xl">{includeSloka ? 'check_circle' : 'radio_button_unchecked'}</span>
-              శ్లోకం అవసరం (Include Sloka)
+              శ్లోకం అవసరం
            </button>
         </div>
 
@@ -205,21 +214,21 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
 
                   <div className="p-24 pt-32 flex justify-between items-start relative z-10">
                      <div className="space-y-10 max-w-[85%]">
-                        <h1 className="text-[100px] font-black tiro text-[#FFD700] drop-shadow-[0_15px_40px_rgba(0,0,0,1)] leading-none uppercase">{post.title}</h1>
-                        <p className="text-[#FFD700]/90 font-bold text-5xl tiro border-l-[16px] border-[#FFD700] pl-12 shadow-sm">{post.subtitle}</p>
+                        <h1 className="text-[100px] font-black tiro text-[#FFD700] leading-none uppercase">{post.title}</h1>
+                        <p className="text-[#FFD700]/90 font-bold text-5xl tiro border-l-[16px] border-[#FFD700] pl-12">{post.subtitle}</p>
                      </div>
-                     <div className="bg-white p-4 rounded-[4rem] shadow-[0_0_100px_rgba(255,215,0,0.6)] border-[10px] border-[#FFD700]/60 w-48 h-48 transform rotate-6">
+                     <div className="bg-white p-4 rounded-[4rem] shadow-2xl border-[10px] border-[#FFD700]/60 w-48 h-48 transform rotate-6">
                         <img src={post.qrUrl || `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${post.authorPhone}`} className="w-full h-full object-contain" alt="QR" />
                      </div>
                   </div>
 
                   <div className="flex-1 p-20 flex flex-col items-center justify-center relative z-10">
-                     <div className="w-full h-full bg-[#0f172a]/95 border-[20px] border-[#FFD700]/15 rounded-[8rem] p-24 flex flex-col items-center relative shadow-[inset_0_0_200px_rgba(0,0,0,1)]">
+                     <div className="w-full h-full bg-[#0f172a]/95 border-[20px] border-[#FFD700]/15 rounded-[8rem] p-24 flex flex-col items-center relative shadow-inner">
                         <div className="flex-1 w-full text-center flex flex-col justify-center gap-16">
                            {post.sloka && (
                              <p className="text-[70px] font-black text-[#FFD700] leading-tight tiro italic drop-shadow-2xl border-b-8 border-[#FFD700]/10 pb-16">{post.sloka}</p>
                            )}
-                           <p className="text-white text-[64px] leading-[2.4] tiro font-bold whitespace-pre-line drop-shadow-[0_15px_30px_rgba(0,0,0,1)]">{post.body}</p>
+                           <p className="text-white text-[64px] leading-[2.4] tiro font-bold whitespace-pre-line drop-shadow-lg">{post.body}</p>
                         </div>
                      </div>
                   </div>
@@ -246,7 +255,7 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
                      </div>
                   </div>
                 </div>
-                <button onClick={() => window.print()} className="w-full mt-24 py-20 bg-orange-600 text-white rounded-[6rem] font-black text-6xl shadow-2xl border-b-[40px] border-orange-900 transition-all active:scale-95">DOWNLOAD 8K TEMPLATE</button>
+                <button onClick={() => window.print()} className="w-full mt-24 py-20 bg-orange-600 text-white rounded-[6rem] font-black text-6xl shadow-2xl border-b-[40px] border-orange-900 transition-all active:scale-95">DOWNLOAD POSTER</button>
               </div>
             ) : (
               <div className={`w-full max-w-[1300px] ${themeColors.bg} border-[30px] ${themeColors.border} rounded-[10rem] p-40 shadow-2xl space-y-24 animate-in slide-in-from-right-20`}>
@@ -254,14 +263,14 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
                   <div className="space-y-10">
                     <p className={`${themeColors.accent} font-black text-4xl uppercase tracking-[1em]`}>DIVINE STORY HUB</p>
                     <h3 className="text-[120px] font-black tiro text-white leading-none">{post.title}</h3>
-                    <p className="text-white/60 font-bold text-6xl tiro italic underline decoration-[16px] decoration-white/10 underline-offset-[30px]">{post.subtitle}</p>
+                    <p className="text-white/60 font-bold text-6xl tiro italic">{post.subtitle}</p>
                   </div>
                 </header>
                 <div className="p-32 bg-black/40 rounded-[8rem] border-8 border-white/5">
                   <p className="text-white tiro text-[70px] leading-[2.8] font-bold text-justify whitespace-pre-line">{post.body}</p>
                 </div>
                 <div className="p-32 border-l-[50px] border-orange-50 bg-black/60 rounded-r-[8rem] shadow-2xl">
-                  <h4 className="text-6xl font-black tiro text-orange-500 uppercase mb-10">MORAL / MESSAGE</h4>
+                  <h4 className="text-6xl font-black tiro text-orange-500 uppercase mb-10">సందేశం</h4>
                   <p className="text-white tiro text-[80px] font-black italic leading-tight">{post.conclusion}</p>
                 </div>
               </div>
