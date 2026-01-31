@@ -3,39 +3,45 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { PostContent, PanchangamData, JathakamResult, OutputMode, SamsayaResult, NumerologyResult, RaasiResult } from "../types";
 
 /**
- * Ensures the API Key is fresh and handled as a runtime constant where possible.
+ * The API key must be obtained exclusively from the environment variable process.env.API_KEY.
  */
+export const getApiKey = () => {
+  return process.env.API_KEY || "";
+};
+
 const getAI = () => {
-  const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey === "" || apiKey === "undefined") {
+  const apiKey = getApiKey();
+  if (!apiKey) {
     throw new Error("API_KEY_MISSING");
   }
   return new GoogleGenAI({ apiKey });
 };
 
-/**
- * Advanced JSON cleaner to handle:
- * 1. Markdown code blocks (```json ... ```)
- * 2. Conversational prefix/suffix
- * 3. Escaped characters
- */
+export const validateApiKey = async (key: string): Promise<boolean> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey: key });
+    await ai.models.generateContent({
+      model: 'gemini-3-flash-lite-latest',
+      contents: 'hi',
+      config: { maxOutputTokens: 1 }
+    });
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 const cleanJSONResponse = (text: string): string => {
   if (!text) return "{}";
   let cleaned = text.trim();
-  
-  // Remove markdown code blocks if present
   if (cleaned.includes("```")) {
     cleaned = cleaned.replace(/```json/g, "").replace(/```/g, "").trim();
   }
-  
-  // Extract only the part between the first { and last }
   const firstBrace = cleaned.indexOf("{");
   const lastBrace = cleaned.lastIndexOf("}");
-  
   if (firstBrace !== -1 && lastBrace !== -1) {
     return cleaned.substring(firstBrace, lastBrace + 1);
   }
-  
   return cleaned;
 };
 
@@ -46,22 +52,20 @@ async function callGemini(params: {
   usePro?: boolean;
 }) {
   const ai = getAI();
-  
-  // High availability model fallback chain
   const models = params.usePro 
-    ? ['gemini-3-pro-preview', 'gemini-3-flash-preview', 'gemini-flash-lite-latest']
-    : ['gemini-3-flash-preview', 'gemini-flash-lite-latest'];
+    ? ['gemini-3-pro-preview', 'gemini-3-flash-preview']
+    : ['gemini-3-flash-preview', 'gemini-3-flash-lite-latest'];
 
   let lastError: any = null;
 
   for (const modelName of models) {
     try {
-      console.log(`Attempting with model: ${modelName}`);
+      // Use generateContent with model name and string contents directly
       const response = await ai.models.generateContent({
         model: modelName,
-        contents: [{ parts: [{ text: params.contents }] }],
+        contents: params.contents,
         config: {
-          systemInstruction: params.systemInstruction || "You are a professional Vedic scholar. Always output valid JSON in Telugu.",
+          systemInstruction: params.systemInstruction || "You are a professional Vedic scholar. Output only valid JSON in Telugu.",
           responseMimeType: 'application/json',
           responseSchema: params.schema,
           thinkingConfig: modelName.includes('pro') ? { thinkingBudget: 16384 } : undefined
@@ -69,26 +73,19 @@ async function callGemini(params: {
       });
 
       const rawText = response.text || "{}";
-      const cleanedText = cleanJSONResponse(rawText);
-      return JSON.parse(cleanedText);
+      return JSON.parse(cleanJSONResponse(rawText));
     } catch (err: any) {
       lastError = err;
-      console.warn(`Model ${modelName} failed:`, err.message);
-      
-      // If it's a critical auth or quota error, don't bother retrying
-      if (err.message?.includes('403') || err.message?.includes('429')) {
-        throw err;
-      }
-      // Otherwise, loop continues to the next fallback model
+      if (err.message?.includes('403') || err.message?.includes('429')) throw err;
+      console.warn(`Model ${modelName} attempt failed: ${err.message}`);
     }
   }
-
-  throw lastError || new Error("అన్ని AI సర్వర్లు బిజీగా ఉన్నాయి. దయచేసి మళ్ళీ ప్రయత్నించండి.");
+  throw lastError || new Error("Connection failed.");
 }
 
 export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResult> => {
   return await callGemini({
-    contents: `Detailed Vedic Horoscope for ${raasi} raasi for today in Telugu.`,
+    contents: `Today's horoscope for ${raasi} in Telugu. Output JSON.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -106,7 +103,7 @@ export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResul
 
 export const generateNumerologyReport = async (name: string, dob: string): Promise<NumerologyResult> => {
   return await callGemini({
-    contents: `Deep Numerology Analysis for ${name} born on ${dob} in Telugu script.`,
+    contents: `Numerology destiny for ${name} (${dob}) in Telugu. Output JSON.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -122,34 +119,6 @@ export const generateNumerologyReport = async (name: string, dob: string): Promi
   });
 };
 
-export const generateFullJathakam = async (name: string, dob: string, time: string, place: string): Promise<JathakamResult> => {
-  return await callGemini({
-    usePro: true,
-    contents: `Complete Vedic Birth Chart (Jathakam) for ${name}, Born: ${dob} at ${time} in ${place}. Scholarly Telugu.`,
-    schema: {
-      type: Type.OBJECT,
-      properties: {
-        personalDetails: { type: Type.OBJECT, properties: { name: { type: Type.STRING } }, required: ['name'] },
-        panchangam: {
-          type: Type.OBJECT,
-          properties: {
-            tithi: { type: Type.STRING }, nakshatram: { type: Type.STRING }, raasi: { type: Type.STRING }, lagnam: { type: Type.STRING }, yogam: { type: Type.STRING }
-          },
-          required: ['tithi', 'nakshatram', 'raasi', 'lagnam', 'yogam']
-        },
-        predictions: {
-          type: Type.OBJECT,
-          properties: {
-            character: { type: Type.STRING }, career: { type: Type.STRING }, health: { type: Type.STRING }, remedies: { type: Type.STRING }
-          },
-          required: ['character', 'career', 'health', 'remedies']
-        }
-      },
-      required: ['personalDetails', 'panchangam', 'predictions']
-    }
-  });
-};
-
 export const generateSpiritualPost = async (
   prompt: string, 
   category: string, 
@@ -160,7 +129,7 @@ export const generateSpiritualPost = async (
 ): Promise<PostContent> => {
   return await callGemini({
     usePro: true,
-    contents: `Task: ${outputMode}. Category: ${category}. Topic: ${prompt}. Sloka: ${includeSloka}. Output MUST be valid JSON.`,
+    contents: `Subject: ${prompt}. Category: ${category}. Sloka: ${includeSloka}. Royal Telugu formatting. Output JSON.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -182,7 +151,7 @@ export const generateSpiritualPost = async (
 export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
   return await callGemini({
     usePro: true,
-    contents: `Solve spiritual doubt using Vedic context: ${query} in Telugu script.`,
+    contents: `Solve spiritual doubt: ${query} in Telugu. Output JSON.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -202,7 +171,7 @@ export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
 
 export const getDailyPanchangam = async (date: string): Promise<PanchangamData> => {
   return await callGemini({
-    contents: `Full Telugu Panchangam for ${date}. Include Rahukalam, Abhijit and Specialty.`,
+    contents: `Daily Panchangam for ${date} in Telugu. Output JSON.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -213,6 +182,47 @@ export const getDailyPanchangam = async (date: string): Promise<PanchangamData> 
         specialty: { type: Type.STRING },
       },
       required: ['date', 'teluguYear', 'ayanam', 'rutuvu', 'masam', 'paksham', 'tithi', 'nakshatram', 'sunrise', 'sunset', 'rahukalam']
+    }
+  });
+};
+
+export const generateFullJathakam = async (name: string, dob: string, time: string, place: string): Promise<JathakamResult> => {
+  return await callGemini({
+    usePro: true,
+    contents: `Full Vedic Jathakam for ${name}, Born: ${dob} at ${time} in ${place}. Output JSON.`,
+    schema: {
+      type: Type.OBJECT,
+      properties: {
+        personalDetails: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING }
+          },
+          required: ['name']
+        },
+        panchangam: {
+          type: Type.OBJECT,
+          properties: {
+            tithi: { type: Type.STRING },
+            nakshatram: { type: Type.STRING },
+            raasi: { type: Type.STRING },
+            lagnam: { type: Type.STRING },
+            yogam: { type: Type.STRING }
+          },
+          required: ['tithi', 'nakshatram', 'raasi', 'lagnam', 'yogam']
+        },
+        predictions: {
+          type: Type.OBJECT,
+          properties: {
+            character: { type: Type.STRING },
+            career: { type: Type.STRING },
+            health: { type: Type.STRING },
+            remedies: { type: Type.STRING }
+          },
+          required: ['character', 'career', 'health', 'remedies']
+        }
+      },
+      required: ['personalDetails', 'panchangam', 'predictions']
     }
   });
 };
