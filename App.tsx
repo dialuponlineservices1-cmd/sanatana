@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppTab } from './types';
 import PostGenerator from './components/PostGenerator';
 import ScriptureLibrary from './components/ScriptureLibrary';
@@ -15,6 +15,25 @@ import LiveConsultation from './components/LiveConsultation';
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.GENERATOR);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [hasKey, setHasKey] = useState(true);
+
+  useEffect(() => {
+    // Check for API key in AI Studio environment
+    const checkKey = async () => {
+      if (window.aistudio) {
+        const selected = await window.aistudio.hasSelectedApiKey();
+        setHasKey(selected);
+      }
+    };
+    checkKey();
+  }, []);
+
+  const handleOpenKeyDialog = async () => {
+    if (window.aistudio) {
+      await window.aistudio.openSelectKey();
+      setHasKey(true); // Proceed after triggering
+    }
+  };
 
   const navItems = [
     { tab: AppTab.GENERATOR, icon: 'dashboard_customize', label: 'డిజైన్ స్టూడియో', color: 'bg-orange-600' },
@@ -33,9 +52,29 @@ const App: React.FC = () => {
     { tab: AppTab.BRANDING, icon: 'settings', label: 'ప్రొఫైల్ సెట్టింగ్స్', color: 'bg-slate-600' }
   ];
 
+  if (!hasKey) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-[#020617] p-10 text-center space-y-12">
+        <div className="w-40 h-40 bg-orange-600 rounded-[3rem] flex items-center justify-center shadow-2xl animate-bounce">
+          <span className="material-icons text-white text-[100px]">vpn_key</span>
+        </div>
+        <h1 className="text-7xl font-black tiro text-white leading-tight">API కీ అవసరం (Key Required)</h1>
+        <p className="text-slate-400 text-3xl tiro max-w-4xl">
+          అత్యాధునిక AI ఫీచర్లు మరియు రియల్-టైమ్ సేవలు ఉపయోగించడానికి దయచేసి మీ API కీని ఎంచుకోండి. 
+          మరిన్ని వివరాలకు <a href="https://ai.google.dev/gemini-api/docs/billing" className="text-orange-500 underline" target="_blank">billing documentation</a> చూడండి.
+        </p>
+        <button 
+          onClick={handleOpenKeyDialog}
+          className="px-24 py-10 bg-orange-600 text-white rounded-full font-black cinzel text-4xl shadow-2xl hover:bg-orange-500 transition-all border-b-[16px] border-orange-950"
+        >
+          SELECT API KEY TO START
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans">
-      {/* PROFESSIONAL SIDEBAR */}
       <aside className={`${isSidebarOpen ? 'w-[420px]' : 'w-24'} bg-[#0f172a] border-r border-slate-800 transition-all duration-500 flex flex-col z-30 shadow-[20px_0_50px_rgba(0,0,0,0.5)] overflow-hidden`}>
         <div className="p-10 flex items-center gap-6 border-b border-slate-800/50 bg-[#1e293b]/30">
           <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg shrink-0">
@@ -69,7 +108,6 @@ const App: React.FC = () => {
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden relative bg-[#020617]">
-        {/* TOP BAR */}
         <header className="h-24 bg-[#0f172a]/80 backdrop-blur-xl border-b border-slate-800 flex items-center justify-between px-10 z-20 shadow-lg">
           <div className="flex items-center gap-8">
             <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-500 p-4 hover:bg-slate-800 rounded-2xl transition-all">
@@ -84,7 +122,7 @@ const App: React.FC = () => {
           <div className="flex items-center gap-8">
              <div className="flex flex-col items-end">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Divine Studio Hub</p>
-                <p className="text-xl font-black text-orange-500 cinzel">PRO v4.9 LIVE</p>
+                <p className="text-xl font-black text-orange-500 cinzel">PRO v4.9.2 LIVE</p>
              </div>
              <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-orange-500 shadow-inner">
                 <span className="material-icons text-3xl">record_voice_over</span>
@@ -92,7 +130,6 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {/* CONTENT AREA */}
         <section className="flex-1 overflow-y-auto p-12 relative custom-scroll bg-gradient-to-br from-[#020617] via-[#0f172a] to-[#020617]">
           <div className="max-w-[1800px] mx-auto">
             {activeTab === AppTab.LIVE_CONSULTATION && <LiveConsultation />}
