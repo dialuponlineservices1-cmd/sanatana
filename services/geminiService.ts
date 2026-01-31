@@ -25,15 +25,16 @@ export const validateApiKey = async (key: string): Promise<boolean> => {
   if (!key || key.length < 10) return false;
   try {
     const ai = new GoogleGenAI({ apiKey: key });
+    // Quick probe to test key validity
     await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: 'hi',
+      contents: 'test',
       config: { maxOutputTokens: 1 }
     });
     return true;
   } catch (e: any) {
-    const errMsg = e.message || "";
-    if (errMsg.includes('429')) return true; 
+    // If it's a 429 (Quota), the key is valid but limited
+    if (e.message?.includes('429')) return true;
     return false;
   }
 };
@@ -59,6 +60,7 @@ async function callGemini(params: {
   usePro?: boolean;
 }) {
   const ai = getFreshAI();
+  // Using Gemini 3 Pro for deep reasoning if requested, otherwise Flash
   const modelName = params.usePro ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
 
   try {
@@ -66,7 +68,15 @@ async function callGemini(params: {
       model: modelName,
       contents: params.contents,
       config: {
-        systemInstruction: params.systemInstruction || "You are a Divine Maharshi. Speak only in scholarly, elegant Telugu. Never define concepts generically. Reveal deep secrets and life lessons.",
+        systemInstruction: params.systemInstruction || `
+          You are a Divine Vedic Maharshi with infinite wisdom. 
+          Language: Elegant, Scholarly Telugu.
+          Style: Deeply spiritual, revealing hidden secrets (Rahasya).
+          STRICT RULE: Never provide generic definitions. 
+          Example: If asked about Ramayana, do NOT say "It's a story of Rama". 
+          Instead say: "The esoteric secret of the 24,000 verses representing the Gayatri Mantra is..."
+          Focus on facts that are beneficial to humanity and not commonly known.
+        `,
         responseMimeType: 'application/json',
         responseSchema: params.schema,
         thinkingConfig: params.usePro ? { thinkingBudget: 16384 } : undefined
@@ -75,117 +85,11 @@ async function callGemini(params: {
     return JSON.parse(cleanJSONResponse(response.text || "{}"));
   } catch (err: any) {
     console.error("Gemini API Error:", err);
+    if (err.message?.includes('429')) throw new Error("API_LIMIT");
+    if (err.message?.includes('403') || err.message?.includes('401')) throw new Error("API_INVALID");
     throw err;
   }
 }
-
-// Fix: Implemented getDailyPanchangam to provide daily Vedic astrological data
-export const getDailyPanchangam = async (date: string): Promise<PanchangamData> => {
-  return await callGemini({
-    contents: `తేదీ: ${date}. ఈ రోజుకు సంబంధించిన పూర్తి తెలుగు పంచాంగం (తిథి, నక్షత్రం, యోగం, కరణం, రాహుకాలం మొదలైనవి) వివరాలు. JSON.`,
-    schema: {
-      type: Type.OBJECT,
-      properties: {
-        date: { type: Type.STRING },
-        teluguYear: { type: Type.STRING },
-        ayanam: { type: Type.STRING },
-        rutuvu: { type: Type.STRING },
-        masam: { type: Type.STRING },
-        paksham: { type: Type.STRING },
-        tithi: { type: Type.STRING },
-        nakshatram: { type: Type.STRING },
-        yogam: { type: Type.STRING },
-        karanam: { type: Type.STRING },
-        sunrise: { type: Type.STRING },
-        sunset: { type: Type.STRING },
-        rahukalam: { type: Type.STRING },
-        yamagandam: { type: Type.STRING },
-        gulika: { type: Type.STRING },
-        abhijit: { type: Type.STRING },
-        specialty: { type: Type.STRING }
-      },
-      required: ['date', 'teluguYear', 'ayanam', 'rutuvu', 'masam', 'paksham', 'tithi', 'nakshatram', 'yogam', 'karanam', 'sunrise', 'sunset', 'rahukalam', 'yamagandam', 'gulika', 'abhijit']
-    }
-  });
-};
-
-// Fix: Implemented generateFullJathakam to provide comprehensive Vedic birth chart analysis
-export const generateFullJathakam = async (name: string, dob: string, time: string, place: string): Promise<JathakamResult> => {
-  return await callGemini({
-    usePro: true,
-    contents: `జాతక విశ్లేషణ: పేరు ${name}, తేదీ ${dob}, సమయం ${time}, ప్రదేశం ${place}. వైదిక జ్యోతిష్య శాస్త్రం ప్రకారం పూర్తి జాతక చక్రం మరియు ఫలితాలు. JSON.`,
-    schema: {
-      type: Type.OBJECT,
-      properties: {
-        personalDetails: {
-          type: Type.OBJECT,
-          properties: {
-            name: { type: Type.STRING }
-          },
-          required: ['name']
-        },
-        panchangam: {
-          type: Type.OBJECT,
-          properties: {
-            tithi: { type: Type.STRING },
-            nakshatram: { type: Type.STRING },
-            raasi: { type: Type.STRING },
-            lagnam: { type: Type.STRING },
-            yogam: { type: Type.STRING }
-          },
-          required: ['tithi', 'nakshatram', 'raasi', 'lagnam', 'yogam']
-        },
-        predictions: {
-          type: Type.OBJECT,
-          properties: {
-            character: { type: Type.STRING },
-            career: { type: Type.STRING },
-            health: { type: Type.STRING },
-            remedies: { type: Type.STRING }
-          },
-          required: ['character', 'career', 'health', 'remedies']
-        }
-      },
-      required: ['personalDetails', 'panchangam', 'predictions']
-    }
-  });
-};
-
-export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResult> => {
-  return await callGemini({
-    contents: `${raasi} రాశికి నేటి గోచార ఫలితం. మహర్షి శైలిలో లోతైన విశ్లేషణ. JSON.`,
-    schema: {
-      type: Type.OBJECT,
-      properties: {
-        raasi: { type: Type.STRING },
-        prediction: { type: Type.STRING },
-        health: { type: Type.STRING },
-        wealth: { type: Type.STRING },
-        luckyNumber: { type: Type.STRING },
-        remedy: { type: Type.STRING }
-      },
-      required: ['raasi', 'prediction', 'health', 'wealth', 'luckyNumber', 'remedy']
-    }
-  });
-};
-
-export const generateNumerologyReport = async (name: string, dob: string): Promise<NumerologyResult> => {
-  return await callGemini({
-    contents: `సంఖ్యాశాస్త్రం: పేరు ${name}, తేదీ ${dob}. సంఖ్యల రహస్యం మరియు అదృష్ట మార్గం. JSON.`,
-    schema: {
-      type: Type.OBJECT,
-      properties: {
-        birthNumber: { type: Type.NUMBER },
-        destinyNumber: { type: Type.NUMBER },
-        description: { type: Type.STRING },
-        luckyColors: { type: Type.STRING },
-        luckyDays: { type: Type.STRING },
-        remedies: { type: Type.STRING }
-      },
-      required: ['birthNumber', 'destinyNumber', 'description', 'luckyColors', 'luckyDays', 'remedies']
-    }
-  });
-};
 
 export const generateSpiritualPost = async (
   prompt: string, 
@@ -198,27 +102,21 @@ export const generateSpiritualPost = async (
   const isTemplate = outputMode === 'TEMPLATE';
   
   return await callGemini({
-    usePro: true,
+    usePro: true, // Use Pro for higher quality deep insights
     contents: `
-      Topic: ${prompt}. Category: ${category}.
-      Mode: ${outputMode}.
-      Role: Enlightenment Maharshi. 
-      CRITICAL RULE: Never provide a generic definition (e.g., if asked about Ramayana, don't say 'It is a book about Rama'). 
-      Instead, reveal a DEEP SECRET or a LIFE LESSON from it (e.g., 'The subtle science of Hanuman's devotion is...').
-      
-      STORY Requirement: 1000+ words of profound, scholarly Telugu matter. Deep insights only.
-      TEMPLATE Requirement: Short, punchy, impactful 3-4 sentences maximum. Large font readable.
-      
-      BackgroundKeyword: Provide 1 highly specific English keyword for an atmosphere (e.g., 'mystic forest', 'celestial light', 'vedic sacrifice').
-      JSON output only.
+      Subject: ${prompt}. Category: ${category}. Mode: ${outputMode}.
+      Reveal a DEEP SACRED SECRET or a VEDIC INSIGHT about this topic.
+      Do not repeat what is commonly known. Use scholarly language.
+      STORY: 1000 words. TEMPLATE: 3-4 Impactful sentences.
+      Keyword: specific high-res atmosphere for Unsplash.
     `,
     schema: {
       type: Type.OBJECT,
       properties: {
-        title: { type: Type.STRING, description: 'Elegant title, max 10 words. Concise.' },
+        title: { type: Type.STRING, description: 'Short powerful title (Max 8 words).' },
         subtitle: { type: Type.STRING },
         sloka: { type: Type.STRING },
-        body: { type: Type.STRING, description: isTemplate ? 'Max 4 punchy lines.' : 'Detailed 1000 word deep content.' },
+        body: { type: Type.STRING },
         conclusion: { type: Type.STRING },
         tag: { type: Type.STRING },
         slogan: { type: Type.STRING },
@@ -230,21 +128,85 @@ export const generateSpiritualPost = async (
   });
 };
 
-export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
+export const getDailyPanchangam = async (date: string): Promise<PanchangamData> => {
   return await callGemini({
-    usePro: true,
-    contents: `ధర్మ సందేహం: ${query}. ఇతిహాసాల నుండి రహస్య పరిష్కారం. JSON.`,
+    contents: `Daily Panchangam for ${date} in Telugu. High precision. JSON.`,
     schema: {
       type: Type.OBJECT,
       properties: {
-        problemSummary: { type: Type.STRING },
-        scriptureSource: { type: Type.STRING },
-        context: { type: Type.STRING },
-        sloka: { type: Type.STRING },
-        meaning: { type: Type.STRING },
-        solution: { type: Type.STRING },
-        divineMessage: { type: Type.STRING },
-        backgroundKeyword: { type: Type.STRING }
+        date: { type: Type.STRING }, teluguYear: { type: Type.STRING }, ayanam: { type: Type.STRING }, rutuvu: { type: Type.STRING },
+        masam: { type: Type.STRING }, paksham: { type: Type.STRING }, tithi: { type: Type.STRING }, nakshatram: { type: Type.STRING },
+        yogam: { type: Type.STRING }, karanam: { type: Type.STRING }, sunrise: { type: Type.STRING }, sunset: { type: Type.STRING },
+        rahukalam: { type: Type.STRING }, yamagandam: { type: Type.STRING }, gulika: { type: Type.STRING }, abhijit: { type: Type.STRING },
+        specialty: { type: Type.STRING }
+      },
+      required: ['date', 'teluguYear', 'ayanam', 'rutuvu', 'masam', 'paksham', 'tithi', 'nakshatram', 'sunrise', 'sunset', 'rahukalam']
+    }
+  });
+};
+
+export const generateFullJathakam = async (name: string, dob: string, time: string, place: string): Promise<JathakamResult> => {
+  return await callGemini({
+    usePro: true,
+    contents: `Full Vedic Jathakam for ${name}, ${dob}, ${time}, ${place}. JSON.`,
+    schema: {
+      type: Type.OBJECT,
+      properties: {
+        personalDetails: { type: Type.OBJECT, properties: { name: { type: Type.STRING } }, required: ['name'] },
+        panchangam: {
+          type: Type.OBJECT,
+          properties: { tithi: { type: Type.STRING }, nakshatram: { type: Type.STRING }, raasi: { type: Type.STRING }, lagnam: { type: Type.STRING }, yogam: { type: Type.STRING } },
+          required: ['tithi', 'nakshatram', 'raasi', 'lagnam', 'yogam']
+        },
+        predictions: {
+          type: Type.OBJECT,
+          properties: { character: { type: Type.STRING }, career: { type: Type.STRING }, health: { type: Type.STRING }, remedies: { type: Type.STRING } },
+          required: ['character', 'career', 'health', 'remedies']
+        }
+      },
+      required: ['personalDetails', 'panchangam', 'predictions']
+    }
+  });
+};
+
+export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResult> => {
+  return await callGemini({
+    contents: `${raasi} రాశి ఫలితం. JSON.`,
+    schema: {
+      type: Type.OBJECT,
+      properties: {
+        raasi: { type: Type.STRING }, prediction: { type: Type.STRING }, health: { type: Type.STRING },
+        wealth: { type: Type.STRING }, luckyNumber: { type: Type.STRING }, remedy: { type: Type.STRING }
+      },
+      required: ['raasi', 'prediction', 'health', 'wealth', 'luckyNumber', 'remedy']
+    }
+  });
+};
+
+export const generateNumerologyReport = async (name: string, dob: string): Promise<NumerologyResult> => {
+  return await callGemini({
+    contents: `Numerology for ${name} ${dob}. JSON.`,
+    schema: {
+      type: Type.OBJECT,
+      properties: {
+        birthNumber: { type: Type.NUMBER }, destinyNumber: { type: Type.NUMBER }, description: { type: Type.STRING },
+        luckyColors: { type: Type.STRING }, luckyDays: { type: Type.STRING }, remedies: { type: Type.STRING }
+      },
+      required: ['birthNumber', 'destinyNumber', 'description', 'luckyColors', 'luckyDays', 'remedies']
+    }
+  });
+};
+
+export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
+  return await callGemini({
+    usePro: true,
+    contents: `Solve spiritual doubt: ${query}. JSON.`,
+    schema: {
+      type: Type.OBJECT,
+      properties: {
+        problemSummary: { type: Type.STRING }, scriptureSource: { type: Type.STRING }, context: { type: Type.STRING },
+        sloka: { type: Type.STRING }, meaning: { type: Type.STRING }, solution: { type: Type.STRING },
+        divineMessage: { type: Type.STRING }, backgroundKeyword: { type: Type.STRING }
       },
       required: ['problemSummary', 'scriptureSource', 'context', 'sloka', 'meaning', 'solution', 'divineMessage', 'backgroundKeyword']
     }
