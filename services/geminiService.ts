@@ -28,8 +28,7 @@ export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResul
       }
     }
   });
-  const rawText = response.text;
-  const text = rawText ? rawText.trim() : '{}';
+  const text = (response.text ?? "{}").trim();
   return JSON.parse(text) as RaasiResult;
 };
 
@@ -55,8 +54,7 @@ export const generateNumerologyReport = async (name: string, dob: string): Promi
       }
     }
   });
-  const rawText = response.text;
-  const text = rawText ? rawText.trim() : '{}';
+  const text = (response.text ?? "{}").trim();
   return JSON.parse(text) as NumerologyResult;
 };
 
@@ -104,8 +102,7 @@ export const generateFullJathakam = async (name: string, dob: string, time: stri
       }
     }
   });
-  const rawText = response.text;
-  const text = rawText ? rawText.trim() : '{}';
+  const text = (response.text ?? "{}").trim();
   return JSON.parse(text) as JathakamResult;
 };
 
@@ -157,8 +154,7 @@ export const generateSpiritualPost = async (
     }
   });
 
-  const rawText = response.text;
-  const text = rawText ? rawText.trim() : '{}';
+  const text = (response.text ?? "{}").trim();
   return JSON.parse(text) as PostContent;
 };
 
@@ -185,8 +181,7 @@ export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
       }
     }
   });
-  const rawText = response.text;
-  const text = rawText ? rawText.trim() : '{}';
+  const text = (response.text ?? "{}").trim();
   return JSON.parse(text) as SamsayaResult;
 };
 
@@ -222,7 +217,6 @@ export const getDailyPanchangam = async (date: string): Promise<PanchangamData> 
       }
     }
   });
-  const rawText = response.text;
-  const text = rawText ? rawText.trim() : '{}';
+  const text = (response.text ?? "{}").trim();
   return JSON.parse(text) as PanchangamData;
 };
