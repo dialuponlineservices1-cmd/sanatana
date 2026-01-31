@@ -5,8 +5,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   define: {
-    // Vite replaces process.env during build. 
-    // We must ensure the value is handled but doesn't hardcode empty strings if not set locally.
+    // This ensures process.env.API_KEY is replaced during build
+    // Vercel provides this during the build phase if set in settings
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY || "")
   },
   server: {
@@ -15,7 +15,7 @@ export default defineConfig({
   build: {
     target: 'esnext',
     outDir: 'dist',
-    chunkSizeWarningLimit: 2000,
+    chunkSizeWarningLimit: 2500,
     rollupOptions: {
       output: {
         manualChunks: {

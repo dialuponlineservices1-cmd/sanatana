@@ -18,11 +18,14 @@ const App: React.FC = () => {
   const [hasKey, setHasKey] = useState(true);
 
   useEffect(() => {
-    // Check for API key in AI Studio environment
+    // Check for API key in AI Studio environment or local process
     const checkKey = async () => {
       if (window.aistudio) {
         const selected = await window.aistudio.hasSelectedApiKey();
         setHasKey(selected);
+      } else if (!process.env.API_KEY) {
+        // If deployed to Vercel without key, this triggers
+        console.warn("API_KEY not found in environment.");
       }
     };
     checkKey();
@@ -31,7 +34,9 @@ const App: React.FC = () => {
   const handleOpenKeyDialog = async () => {
     if (window.aistudio) {
       await window.aistudio.openSelectKey();
-      setHasKey(true); // Proceed after triggering
+      setHasKey(true);
+    } else {
+      alert("Vercel లో మోహరించినప్పుడు, దయచేసి ప్రాజెక్ట్ సెట్టింగ్స్‌లో ఎన్విరాన్మెంట్ వేరియబుల్స్ సెట్ చేయండి.");
     }
   };
 
@@ -60,14 +65,13 @@ const App: React.FC = () => {
         </div>
         <h1 className="text-7xl font-black tiro text-white leading-tight">API కీ అవసరం (Key Required)</h1>
         <p className="text-slate-400 text-3xl tiro max-w-4xl">
-          అత్యాధునిక AI ఫీచర్లు మరియు రియల్-టైమ్ సేవలు ఉపయోగించడానికి దయచేసి మీ API కీని ఎంచుకోండి. 
-          మరిన్ని వివరాలకు <a href="https://ai.google.dev/gemini-api/docs/billing" className="text-orange-500 underline" target="_blank">billing documentation</a> చూడండి.
+          అత్యాధునిక AI సేవలు పొందడానికి దయచేసి మీ కీని ఎంచుకోండి. 
         </p>
         <button 
           onClick={handleOpenKeyDialog}
           className="px-24 py-10 bg-orange-600 text-white rounded-full font-black cinzel text-4xl shadow-2xl hover:bg-orange-500 transition-all border-b-[16px] border-orange-950"
         >
-          SELECT API KEY TO START
+          CONNECT API KEY
         </button>
       </div>
     );
@@ -83,7 +87,7 @@ const App: React.FC = () => {
           {isSidebarOpen && (
             <div className="overflow-hidden">
               <h1 className="cinzel font-black text-2xl text-orange-500 tracking-tighter leading-none whitespace-nowrap">BHASKARA PRO</h1>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">INTERNAL COMMAND CENTER</p>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">INTERNAL STUDIO HUB</p>
             </div>
           )}
         </div>
@@ -121,8 +125,8 @@ const App: React.FC = () => {
           
           <div className="flex items-center gap-8">
              <div className="flex flex-col items-end">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Divine Studio Hub</p>
-                <p className="text-xl font-black text-orange-500 cinzel">PRO v4.9.2 LIVE</p>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">BHASKARA PRO STUDIO</p>
+                <p className="text-xl font-black text-orange-500 cinzel">v5.0.0-PRO LIVE</p>
              </div>
              <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-orange-500 shadow-inner">
                 <span className="material-icons text-3xl">record_voice_over</span>
