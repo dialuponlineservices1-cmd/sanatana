@@ -32,20 +32,27 @@ const getFreshAI = () => {
 };
 
 /**
- * Validates the API key by making a minimal request.
- * Uses 'gemini-3-flash-preview' as it's the most reliable standard model.
+ * Validates the API key. 
+ * If it returns 429 (Rate Limit), the key is still "Valid" but busy.
  */
 export const validateApiKey = async (key: string): Promise<boolean> => {
-  if (!key) return false;
+  if (!key || key.length < 10) return false;
   try {
     const ai = new GoogleGenAI({ apiKey: key });
+    // Use the fastest model for validation
     await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: 'hi',
       config: { maxOutputTokens: 1 }
     });
     return true;
-  } catch (e) {
+  } catch (e: any) {
+    const errMsg = e.message || "";
+    // If the error is 429 (Too many requests), it means the key IS VALID, just at limit.
+    if (errMsg.includes('429') || errMsg.includes('limit')) {
+      console.warn("API Key is valid but currently rate-limited.");
+      return true; 
+    }
     console.error("API Key Validation Failed:", e);
     return false;
   }
@@ -72,9 +79,10 @@ async function callGemini(params: {
   usePro?: boolean;
 }) {
   const ai = getFreshAI();
-  // Using correct model names from the documentation guidelines
+  
+  // Attempt with standard models first, then fallback to lite
   const models = params.usePro 
-    ? ['gemini-3-pro-preview', 'gemini-3-flash-preview']
+    ? ['gemini-3-pro-preview', 'gemini-3-flash-preview', 'gemini-flash-lite-latest']
     : ['gemini-3-flash-preview', 'gemini-flash-lite-latest'];
 
   let lastError: any = null;
@@ -97,10 +105,21 @@ async function callGemini(params: {
     } catch (err: any) {
       lastError = err;
       const errMsg = err.message || "";
-      if (errMsg.includes('403') || errMsg.includes('401') || errMsg.includes('API_KEY_INVALID')) {
+      
+      // Stop retrying if the key itself is definitively invalid
+      if (errMsg.includes('403') || errMsg.includes('401') || errMsg.includes('INVALID_ARGUMENT')) {
         throw new Error("API_KEY_INVALID");
       }
-      if (errMsg.includes('429')) throw new Error("API_LIMIT_REACHED");
+      
+      // Special handling for rate limits
+      if (errMsg.includes('429')) {
+        // If we still have models to try, continue. Otherwise, throw limit error.
+        if (modelName === models[models.length - 1]) {
+           throw new Error("API_LIMIT_REACHED");
+        }
+        continue;
+      }
+      
       console.warn(`Model ${modelName} failed: ${errMsg}`);
     }
   }
