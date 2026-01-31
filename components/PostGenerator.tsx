@@ -68,14 +68,14 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
 
   const handleGenerate = async (targetMode: OutputMode) => {
     if (!topic && !selectedId) {
-      alert("దయచేసి ఒక అంశాన్ని ఎంచుకోండి లేదా వివరించండి.");
+      alert("దయచేసి ఒక అంశాన్ని ఎంచుకోండి.");
       return;
     }
     setLoading(true);
     setPost(null);
     setViewMode(targetMode === 'TEMPLATE' ? 'POSTER' : 'STORY');
     
-    const steps = ["దివ్య సమాచారం సేకరిస్తున్నాం...", "భావజాలం విశ్లేషిస్తున్నాం...", "రూపకల్పన జరుగుతోంది..."];
+    const steps = ["సమాచారం సేకరిస్తున్నాం...", "విశ్లేషణ జరుగుతోంది...", "రూపకల్పన సిద్ధమవుతోంది..."];
     let stepIndex = 0;
     const interval = setInterval(() => {
       setResearchStep(steps[stepIndex % steps.length]);
@@ -107,10 +107,10 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
       console.error("Critical error in handleGenerate:", e);
       let errorMsg = "క్షమించాలి, కంటెంట్ సిద్ధం చేయలేకపోయాము.";
       
-      if (e.message?.includes('API_KEY')) {
-        errorMsg += "\n\nగమనిక: మీ API Key చెల్లడం లేదు లేదా Vercel లో సెట్ చేయబడలేదు.";
+      if (e.message?.includes('API_KEY_MISSING')) {
+        errorMsg += "\n\nగమనిక: Vercel Settings లో API_KEY సెట్ చేయబడలేదు.";
       } else if (e.message?.includes('429')) {
-        errorMsg += "\n\nగమనిక: మీ కోటా ముగిసింది. దయచేసి కొద్దిసేపు ఆగి మళ్ళీ ప్రయత్నించండి.";
+        errorMsg += "\n\nగమనిక: మీ API కోటా ముగిసింది. దయచేసి కొద్దిసేపు ఆగి మళ్ళీ ప్రయత్నించండి.";
       } else {
         errorMsg += `\n\nవివరాలు: ${e.message || "Unknown Connection Error"}`;
       }
