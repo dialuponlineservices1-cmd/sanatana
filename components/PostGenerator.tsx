@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { generateSpiritualPost } from '../services/geminiService';
 import { PostContent, AppTab, Branding, OutputMode } from '../types';
-import { SCRIPTURES, MAHARSHIS_LIST, TEMPLES_LIST, FESTIVALS_LIST, SPECIAL_DAYS_LIST } from '../constants';
+import { SCRIPTURES, MAHARSHIS_LIST, TEMPLES_LIST, FESTIVALS_LIST, SPECIAL_DAYS_LIST, VASTU_LIST } from '../constants';
 
 interface PostGeneratorProps {
   mode: AppTab;
@@ -17,6 +17,7 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
   const [isListening, setIsListening] = useState(false);
   const [isRahasyaMode, setIsRahasyaMode] = useState(true);
   const [outputMode, setOutputMode] = useState<OutputMode>('STORY');
+  const [researchStep, setResearchStep] = useState('');
 
   // Voice Interaction Logic
   const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -58,6 +59,7 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
     else if (mode === AppTab.TEMPLES) items = TEMPLES_LIST;
     else if (mode === AppTab.PANDUGALU) items = FESTIVALS_LIST;
     else if (mode === AppTab.SPECIAL_DAYS) items = SPECIAL_DAYS_LIST;
+    else if (mode === AppTab.VASTU) items = VASTU_LIST;
     
     if (nodeSearch) {
       return items.filter(i => (i.name || i.teluguName).toLowerCase().includes(nodeSearch.toLowerCase()));
@@ -66,11 +68,12 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
   }, [mode, nodeSearch]);
 
   const presets = {
-    [AppTab.GENERATOR]: ['బ్రహ్మ ముహూర్త శక్తి', 'మంత్ర సాధన రహస్యం', 'పంచభూత తత్వం'],
-    [AppTab.PANDUGALU]: ['సంక్రాంతి విశిష్టత', 'పూజా విధానం', 'శాస్త్రీయ అంతరార్థం'],
-    [AppTab.SPECIAL_DAYS]: ['ఏకాదశి ఉపవాస నియమాలు', 'ప్రదోష కాల శివారాధన', 'నేటి గ్రహ గమనం'],
-    [AppTab.MORAL_STORIES]: ['పంచతంత్ర నీతి కథలు', 'తేనాలి రామకృష్ణ తెలివితేటలు', 'వివేకానంద బోధనలు', 'పరమానందయ్య శిష్యుల కథలు'],
-    [AppTab.KIDS_STORIES]: ['బాల కృష్ణ లీలలు', 'హనుమంతుని సాహసాలు', 'చిన్నారి గణపతి తెలివి', 'ధ్రువ మహారాజు తపస్సు']
+    [AppTab.GENERATOR]: ['ఋగ్వేద సూక్తుల అంతరార్థం', 'మంత్ర సాధన విధి - నిబద్ధత', 'పంచ భూతాల సమతుల్యత'],
+    [AppTab.PANDUGALU]: ['సంక్రాంతి శాస్త్రీయ విశిష్టత', 'పూజా విధానం (వరం కోసం)', 'పండుగలలో నిషిద్ధ క్రియలు'],
+    [AppTab.SPECIAL_DAYS]: ['ఏకాదశి ఉపవాస శాస్త్రీయ కారణం', 'ప్రదోష కాల శివార్చన వైభవం', 'నేటి గ్రహ గమనం - ప్రభావం'],
+    [AppTab.VASTU]: ['ఈశాన్య మూల - ప్రాముఖ్యత', 'ఆగ్నేయం లో వంటగది ఎందుకు?', 'వాస్తు పురుష మండలం అంటే ఏమిటి?', 'నైరుతి దోష నివారణ ఎలా?', 'బ్రహ్మ స్థానం నియమాలు'],
+    [AppTab.MORAL_STORIES]: ['పంచతంత్రం: మిత్రభేదం నీతి', 'వివేకానంద గారి ఆత్మవిశ్వాస కథ', 'తేనాలి రామకృష్ణ చతురత', 'పరమానందయ్య శిష్యుల విజ్ఞానం'],
+    [AppTab.KIDS_STORIES]: ['బాల కృష్ణుడు మరియు కాళియుడు', 'హనుమంతుడు సూర్యుడిని మింగడం', 'చిన్నారి గణపతి యొక్క వినయం', 'ప్రహ్లాదుని భక్తి మార్గం']
   };
 
   useEffect(() => {
@@ -88,6 +91,19 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
     }
 
     setLoading(true);
+    const steps = [
+      "ప్రాచీన గ్రంథాల పరిశీలన...",
+      "వాస్తు/ధర్మ సూత్రాల అన్వేషణ...",
+      "నిజమైన ఆధారాల సేకరణ...",
+      "శబ్ద విశ్లేషణ మరియు తెలుగు అనువాదం...",
+      "దివ్య జ్ఞాన ఆవిష్కరణ..."
+    ];
+    let stepIndex = 0;
+    const interval = setInterval(() => {
+      setResearchStep(steps[stepIndex % steps.length]);
+      stepIndex++;
+    }, 2500);
+
     try {
       const b = getBranding();
       const selectedItem = currentList.find(item => item.id === selectedId);
@@ -115,7 +131,9 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
     } catch (e) {
       alert("కాస్మిక్ సర్వర్ ఎర్రర్. మళ్ళీ ప్రయత్నించండి.");
     } finally {
+      clearInterval(interval);
       setLoading(false);
+      setResearchStep('');
     }
   };
 
@@ -134,12 +152,12 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
           
           <header className="mb-12 border-b-4 border-orange-50 pb-8 flex flex-col md:flex-row justify-between items-center gap-8">
              <div className="text-center md:text-left">
-                <span className="text-xl font-black text-orange-600 bg-orange-50 px-8 py-2 rounded-full uppercase tracking-[0.5em]">{mode} విభాగం</span>
-                <h3 className="text-6xl font-black tiro text-orange-800 mt-4 leading-none uppercase">దివ్య కంటెంట్ హబ్</h3>
+                <span className="text-xl font-black text-orange-600 bg-orange-50 px-8 py-2 rounded-full uppercase tracking-[0.5em]">{mode} పరిశోధన</span>
+                <h3 className="text-6xl font-black tiro text-orange-800 mt-4 leading-none uppercase">వైదిక జ్ఞాన కేంద్రం</h3>
              </div>
              <div className="flex bg-orange-50 p-2 rounded-[3rem] border-4 border-orange-100 shadow-inner">
-                <button onClick={() => setOutputMode('STORY')} className={`px-10 py-4 rounded-[2.5rem] font-black text-2xl transition-all ${outputMode === 'STORY' ? 'bg-orange-600 text-white shadow-2xl scale-105' : 'text-orange-900 hover:bg-orange-200'}`}>కథనం</button>
-                <button onClick={() => setOutputMode('TEMPLATE')} className={`px-10 py-4 rounded-[2.5rem] font-black text-2xl transition-all ${outputMode === 'TEMPLATE' ? 'bg-orange-600 text-white shadow-2xl scale-105' : 'text-orange-900 hover:bg-orange-200'}`}>పోస్టర్</button>
+                <button onClick={() => setOutputMode('STORY')} className={`px-10 py-4 rounded-[2.5rem] font-black text-2xl transition-all ${outputMode === 'STORY' ? 'bg-orange-600 text-white shadow-2xl scale-105' : 'text-orange-900 hover:bg-orange-200'}`}>కథనం (Deep)</button>
+                <button onClick={() => setOutputMode('TEMPLATE')} className={`px-10 py-4 rounded-[2.5rem] font-black text-2xl transition-all ${outputMode === 'TEMPLATE' ? 'bg-orange-600 text-white shadow-2xl scale-105' : 'text-orange-900 hover:bg-orange-200'}`}>పోస్టర్ (Real)</button>
              </div>
           </header>
 
@@ -164,26 +182,26 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
             {/* INPUT & VOICE */}
             <div className="space-y-8">
                <div className="flex justify-between items-end px-4">
-                  <label className="text-2xl font-black text-orange-600 uppercase tracking-widest pl-4 border-l-8 border-orange-500">మీ సందేహం / అంశం</label>
+                  <label className="text-2xl font-black text-orange-600 uppercase tracking-widest pl-4 border-l-8 border-orange-500">పరిశోధనా అంశం</label>
                   <button onClick={toggleListening} className={`flex items-center gap-4 px-10 py-5 rounded-full font-black text-2xl transition-all shadow-lg ${isListening ? 'bg-red-600 text-white animate-pulse' : 'bg-orange-100 text-orange-700 hover:bg-orange-200'}`}>
                     <span className="material-icons text-4xl">{isListening ? 'mic' : 'mic_none'}</span>
-                    {isListening ? 'వాని వింటోంది...' : 'దివ్య వాని'}
+                    {isListening ? 'వింటోంది...' : 'దివ్య వాని'}
                   </button>
                </div>
-               <textarea value={topic} onChange={e => setTopic(e.target.value)} placeholder="అంశాన్ని ఇక్కడ వివరించండి..." className="w-full bg-orange-50/50 border-8 border-orange-100 rounded-[5rem] p-16 text-5xl tiro outline-none focus:border-orange-500 focus:bg-white transition-all min-h-[350px] shadow-inner text-orange-950" />
+               <textarea value={topic} onChange={e => setTopic(e.target.value)} placeholder="విషయాన్ని ఇక్కడ వివరించండి (ఉదా: ఈశాన్య దోష నివారణ)..." className="w-full bg-orange-50/50 border-8 border-orange-100 rounded-[5rem] p-16 text-5xl tiro outline-none focus:border-orange-500 focus:bg-white transition-all min-h-[350px] shadow-inner text-orange-950" />
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
                <div className="bg-orange-50/30 p-10 rounded-[4rem] space-y-8 shadow-sm">
-                  <p className="text-center font-black uppercase text-orange-400 tracking-[0.5em] border-b-2 border-orange-100 pb-4">నిత్య ప్రేరణ</p>
+                  <p className="text-center font-black uppercase text-orange-400 tracking-[0.5em] border-b-2 border-orange-100 pb-4">ధర్మ సూచనలు (Real Q&A)</p>
                   <div className="flex flex-col gap-4">
                      <button onClick={divineSuggestion} className="w-full py-6 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white rounded-[2.5rem] font-black text-3xl tiro shadow-xl flex items-center justify-center gap-6 hover:brightness-110 active:scale-95 transition-all">
-                        <span className="material-icons text-5xl">auto_awesome</span>
-                        నిత్య సూచన (Auto Pick)
+                        <span className="material-icons text-5xl">manage_search</span>
+                        పరిశోధనా సూచన (Auto Pick)
                      </button>
                      <div className="grid grid-cols-1 gap-4">
                         {(presets[mode as keyof typeof presets] || presets[AppTab.GENERATOR]).slice(0, 3).map(t => (
-                          <button key={t} onClick={() => handleGenerate(t)} className="px-8 py-5 bg-white border-4 border-orange-100 rounded-[2rem] text-2xl font-black text-orange-900 hover:bg-orange-600 hover:text-white transition-all tiro shadow-md">
+                          <button key={t} onClick={() => handleGenerate(t)} className="px-8 py-5 bg-white border-4 border-orange-100 rounded-[2rem] text-2xl font-black text-orange-900 hover:bg-orange-600 hover:text-white transition-all tiro shadow-md text-left">
                             {t}
                           </button>
                         ))}
@@ -192,10 +210,15 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
                </div>
                <div className="flex flex-col gap-8 justify-end">
                   <button onClick={() => setIsRahasyaMode(!isRahasyaMode)} className={`w-full py-8 rounded-[3rem] font-black text-2xl tracking-[0.5em] border-8 transition-all ${isRahasyaMode ? 'bg-orange-950 text-white border-black shadow-2xl' : 'bg-orange-100 text-orange-800 border-orange-200'}`}>
-                    {isRahasyaMode ? 'RAHASYA: ACTIVE' : 'STANDARD: ACTIVE'}
+                    {isRahasyaMode ? 'RAHASYA MODE: ON' : 'STANDARD MODE: ON'}
                   </button>
-                  <button onClick={() => handleGenerate()} disabled={loading} className="w-full py-20 bg-gradient-to-r from-orange-600 to-amber-500 text-white font-black rounded-[5rem] text-6xl shadow-[0_40px_80px_rgba(234,88,12,0.4)] hover:brightness-110 active:scale-95 transition-all cinzel border-b-[24px] border-orange-900 uppercase tracking-[1em]">
-                    {loading ? 'Manifesting...' : 'సృష్టించు'}
+                  <button onClick={() => handleGenerate()} disabled={loading} className="w-full py-20 bg-gradient-to-r from-orange-600 to-amber-500 text-white font-black rounded-[5rem] text-6xl shadow-[0_40px_80px_rgba(234,88,12,0.4)] hover:brightness-110 active:scale-95 transition-all cinzel border-b-[24px] border-orange-900 uppercase tracking-[1em] relative overflow-hidden">
+                    {loading ? (
+                      <div className="flex flex-col items-center">
+                         <span className="animate-pulse">DIVINING...</span>
+                         <span className="text-2xl mt-4 tiro normal-case tracking-normal">{researchStep}</span>
+                      </div>
+                    ) : 'సృష్టించు (Real)'}
                   </button>
                </div>
             </div>
@@ -206,8 +229,8 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
       {/* 2. OUTPUT PREVIEW */}
       <div className="lg:col-span-6 sticky top-20 flex flex-col items-center gap-12">
         <div className="px-16 py-8 bg-orange-600 text-white rounded-full flex items-center gap-8 shadow-2xl border-4 border-orange-400">
-           <span className="material-icons text-5xl">verified_user</span>
-           <span className="text-3xl font-black uppercase tracking-[1em]">PLATINUM COMMAND OUTPUT</span>
+           <span className="material-icons text-5xl">auto_stories</span>
+           <span className="text-3xl font-black uppercase tracking-[1em]">DEEP RESEARCH MANIFESTO</span>
         </div>
         
         {post ? (
@@ -242,13 +265,13 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
 
                  {post.rituals && (
                    <div className="bg-indigo-50 border-[12px] border-indigo-100 p-20 rounded-[8rem] space-y-12 shadow-inner">
-                      <h4 className="cinzel text-6xl font-black text-indigo-800 border-b-4 border-indigo-200 pb-8 uppercase tracking-widest">Protocol (విధానం)</h4>
+                      <h4 className="cinzel text-6xl font-black text-indigo-800 border-b-4 border-indigo-200 pb-8 uppercase tracking-widest">Deep Logic (ప్రమాణ విధి)</h4>
                       <p className="tiro text-5xl leading-relaxed text-indigo-900 whitespace-pre-line font-black italic">{post.rituals}</p>
                    </div>
                  )}
 
                  <div className="bg-gradient-to-br from-orange-700 to-amber-700 p-24 rounded-[9rem] text-white shadow-xl mt-24">
-                    <h4 className="cinzel text-4xl font-black mb-8 border-b border-white/20 pb-4">ముగింపు</h4>
+                    <h4 className="cinzel text-4xl font-black mb-8 border-b border-white/20 pb-4">శాస్త్ర నిశ్చయం (Final Conclusion)</h4>
                     <p className="tiro text-6xl leading-[2] font-black italic">
                        {post.conclusion}
                     </p>
@@ -268,7 +291,7 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
                  </div>
                  <div className="text-right">
                     <h2 className="text-8xl font-black cinzel text-orange-700 tracking-[0.5em]">{post.groupName}</h2>
-                    <p className="text-3xl font-black uppercase tracking-[1em] text-orange-400">Divine Archive</p>
+                    <p className="text-3xl font-black uppercase tracking-[1em] text-orange-400">Deep Vedic Research</p>
                  </div>
               </div>
             </div>
@@ -276,21 +299,21 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
             <div className="grid md:grid-cols-2 gap-12 pt-8">
               <button onClick={() => { 
                 navigator.clipboard.writeText(post.whatsappFormat || ''); 
-                alert("Master Deep Story Copied!"); 
+                alert("Deep Research Content Copied!"); 
               }} className="w-full py-24 bg-orange-800 text-white rounded-[7rem] font-black uppercase tracking-[1em] shadow-xl text-6xl hover:scale-[1.05] transition-all border-b-[24px] border-orange-950 flex items-center justify-center gap-12">
                  <span className="material-icons text-8xl">share</span>
-                 Copy Story
+                 Copy Deep Link
               </button>
               <button onClick={() => window.print()} className="w-full py-24 bg-white border-[12px] border-orange-100 text-orange-700 rounded-[7rem] font-black uppercase tracking-[1em] shadow-2xl text-6xl hover:bg-orange-50 transition-all flex items-center justify-center gap-12">
                  <span className="material-icons text-8xl">print</span>
-                 Print
+                 Download PDF
               </button>
             </div>
           </div>
         ) : (
           <div className="w-full max-w-[1000px] aspect-[9/16] bg-white border-[32px] border-dashed border-orange-100 rounded-[12rem] flex flex-col items-center justify-center p-64 text-center text-orange-100 group">
-             <span className="material-icons text-[500px] mb-24 opacity-5 group-hover:scale-110 transition-all duration-5000">castle</span>
-             <p className="text-6xl font-black uppercase tracking-[2em] opacity-5">Select Archive Node</p>
+             <span className="material-icons text-[500px] mb-24 opacity-5 group-hover:scale-110 transition-all duration-5000">architecture</span>
+             <p className="text-6xl font-black uppercase tracking-[2em] opacity-5">Initiate Research Cycle</p>
           </div>
         )}
       </div>

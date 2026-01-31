@@ -67,7 +67,8 @@ export type ScriptureCategory =
   | 'Aghora'
   | 'Yoga'
   | 'Vedanga'
-  | 'Architecture';
+  | 'Architecture'
+  | 'Vastu';
 
 export interface Scripture {
   id: string;
@@ -78,14 +79,12 @@ export interface Scripture {
   rahasyaLevel: number; // 1-10
 }
 
-// Added missing interface for generic items
 export interface PresetItem {
   id: string;
   name: string;
   icon: string;
 }
 
-// Added missing interface for Maharshi details
 export interface Maharshi {
   id: string;
   name: string;
@@ -94,7 +93,6 @@ export interface Maharshi {
   description: string;
 }
 
-// Added missing interface for Temple details
 export interface Temple {
   id: string;
   name: string;

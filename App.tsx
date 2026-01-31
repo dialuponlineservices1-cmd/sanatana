@@ -14,6 +14,7 @@ const App: React.FC = () => {
 
   const navItems = [
     { tab: AppTab.GENERATOR, icon: 'auto_fix_high', label: 'దివ్య స్టూడియో', color: 'bg-orange-500' },
+    { tab: AppTab.VASTU, icon: 'architecture', label: 'వాస్తు శాస్త్రం', color: 'bg-stone-700' },
     { tab: AppTab.MORAL_STORIES, icon: 'menu_book', label: 'నిత్య నీతి కథలు', color: 'bg-emerald-600' },
     { tab: AppTab.KIDS_STORIES, icon: 'face', label: 'బాల శిక్ష (Kids)', color: 'bg-blue-500' },
     { tab: AppTab.PANDUGALU, icon: 'celebration', label: 'మన పండుగలు', color: 'bg-pink-600' },
@@ -38,7 +39,7 @@ const App: React.FC = () => {
           {isSidebarOpen && (
             <div className="animate-in fade-in slide-in-from-left-8 duration-700">
               <h1 className="cinzel font-black text-4xl text-orange-800 leading-none tracking-tighter">SANATANA PRO</h1>
-              <p className="text-[12px] font-black tracking-[0.6em] text-orange-400 uppercase mt-3">DIVINE CONSOLE V12.0</p>
+              <p className="text-[12px] font-black tracking-[0.6em] text-orange-400 uppercase mt-3">DIVINE CONSOLE V13.0</p>
             </div>
           )}
         </div>
@@ -73,7 +74,7 @@ const App: React.FC = () => {
              </div>
              {isSidebarOpen && (
                <div>
-                 <span className="text-[12px] font-black text-orange-600 uppercase tracking-widest block">Supreme Command</span>
+                 <span className="text-[12px] font-black text-orange-600 uppercase tracking-widest block">Supreme Research Hub</span>
                </div>
              )}
           </div>
@@ -88,12 +89,12 @@ const App: React.FC = () => {
             </button>
             <div className="flex flex-col">
               <h2 className="text-5xl font-black tiro text-orange-800 leading-none">శ్రీ సనాతన ధర్మ స్టూడియో</h2>
-              <span className="text-[14px] text-orange-400 font-black uppercase tracking-[1em] mt-4 hidden sm:block">Vedic Content Engine Pro</span>
+              <span className="text-[14px] text-orange-400 font-black uppercase tracking-[1em] mt-4 hidden sm:block">Vedic Research Engine Pro</span>
             </div>
           </div>
           <div className="flex items-center gap-8 bg-orange-50 px-8 py-4 rounded-[2rem] border-2 border-orange-100">
              <span className="w-4 h-4 bg-green-500 rounded-full animate-pulse"></span>
-             <span className="text-xl font-black text-orange-700 cinzel">DIVINE SYNC ACTIVE</span>
+             <span className="text-xl font-black text-orange-700 cinzel">RESEARCH CORES ACTIVE</span>
           </div>
         </header>
 
@@ -104,6 +105,7 @@ const App: React.FC = () => {
               activeTab === AppTab.TEMPLES || 
               activeTab === AppTab.PANDUGALU || 
               activeTab === AppTab.SPECIAL_DAYS || 
+              activeTab === AppTab.VASTU ||
               activeTab === AppTab.MORAL_STORIES || 
               activeTab === AppTab.KIDS_STORIES) && (
               <PostGenerator mode={activeTab} />

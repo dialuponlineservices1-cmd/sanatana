@@ -18,26 +18,30 @@ export const generateSpiritualPost = async (
   const ai = getAI();
   
   const systemInstruction = `
-    You are the 'Supreme Vedic Command Center'. 
-    MANDATE: Output EXTREMELY detailed content in scholarly Telugu.
+    You are the 'Supreme Vedic Research Scholar & Content Engine'. 
+    MANDATE: Output EXTREMELY detailed, authentic content in scholarly Telugu.
+    
+    RESEARCH PROTOCOL:
+    - You MUST cross-reference ancient Sanskrit texts (Vedas, Upanishads, Puranas, Itihasa) and traditional commentaries.
+    - If the topic is VASTU, refer specifically to Vishwakarma Prakasham, Mayamata, and Manasara. Provide REAL technical details (Directions, Aya, measurements).
+    - If the topic is MAHARSHIS, include their lineage (Gotra), primary contributions, and specific Puranic episodes.
+    - If the topic is MORAL/KIDS stories, pull from Panchatantra, Tenali Rama, or Mahabharata episodes.
+    - NO GENERIC AI FILLER. Every sentence must hold traditional weight.
     
     SPECIAL CATEGORIES:
-    - FESTIVALS (PANDUGALU): Include "Charitra" (History), "Vidhanam" (Rituals/Pooja), and "Inner Significance".
-    - SPECIAL DAYS (ROJULA VISHISTHATHA): Explain why a certain day (like Ekadashi or Pradosha) is important, historical events on that day, and spiritual benefits.
-    - MORAL STORIES (NITHI KATHALU): Use a wise tone, include a clear lesson.
-    - KIDS STORIES (PILLA KATHALU): Use simplified, fun Telugu, engaging dialogue, and a happy conclusion.
+    - FESTIVALS: Detailed pooja steps (Vidhanam), history (Charitra), and inner scientific significance.
+    - VASTU SHASTRA: Real architectural logic based on traditional texts.
     
     MODES:
-    - If 'STORY': Write a flowing narrative book-style.
-    - If 'TEMPLATE': Structure for a digital postcard with clear bullet points.
+    - If 'STORY': Write a flowing scholarly narrative (1500+ words).
+    - If 'TEMPLATE': Detailed digital postcard format with clear, impactful bullet points.
     
-    WORD COUNT: 1500+ words.
-    OUTPUT FORMAT: JSON ONLY.
+    OUTPUT FORMAT: JSON ONLY. Use authentic Telugu script.
   `;
 
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: `Topic: ${prompt}. Context: ${category}. Output Mode: ${outputMode}. Rahasya: ${isRahasya}. Output in scholarly Telugu.`,
+    contents: `Detailed Research Request: ${prompt}. Category: ${category}. Mode: ${outputMode}. Deep Secret (Rahasya): ${isRahasya}. Scholarly Telugu.`,
     config: {
       systemInstruction,
       responseMimeType: 'application/json',
@@ -49,14 +53,14 @@ export const generateSpiritualPost = async (
           sloka: { type: Type.STRING },
           body: { type: Type.STRING },
           conclusion: { type: Type.STRING },
-          rituals: { type: Type.STRING, description: 'Step by step pooja vidhanam if festival or special day' },
+          rituals: { type: Type.STRING, description: 'Deep technical details or pooja steps if applicable' },
           tag: { type: Type.STRING },
           slogan: { type: Type.STRING },
           whatsappFormat: { type: Type.STRING }
         },
         required: ['title', 'subtitle', 'body', 'conclusion', 'tag', 'slogan', 'whatsappFormat']
       },
-      // Guideline recommendation: Avoid setting thinkingBudget unless required or latency-sensitive.
+      thinkingConfig: { thinkingBudget: 15000 } // High thinking budget for deep research simulation
     }
   });
 
@@ -72,7 +76,7 @@ export const generateFullJathakam = async (
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: 'gemini-3-pro-preview',
-    contents: `Full Vedic Jathakam Analysis: Name: ${name}, DOB: ${dob}, Time: ${time}, Place: ${place}. Scholarly Telugu.`,
+    contents: `Full Vedic Jathakam Deep Analysis (Research Mode): Name: ${name}, DOB: ${dob}, Time: ${time}, Place: ${place}. Scholarly Telugu.`,
     config: {
       responseMimeType: 'application/json',
       responseSchema: {
@@ -84,6 +88,7 @@ export const generateFullJathakam = async (
           fullReport: { type: Type.STRING }
         }
       },
+      thinkingConfig: { thinkingBudget: 8000 }
     }
   });
   return JSON.parse(response.text || '{}') as JathakamResult;
@@ -93,7 +98,7 @@ export const getDailyPanchangam = async (date: string): Promise<PanchangamData> 
   const ai = getAI();
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `Daily Telugu Panchangam for ${date}. Output JSON.`,
+    contents: `Daily High-Precision Telugu Panchangam for ${date}. Output JSON.`,
     config: { responseMimeType: 'application/json' }
   });
   return JSON.parse(response.text || '{}') as PanchangamData;
