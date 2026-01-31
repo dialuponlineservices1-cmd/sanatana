@@ -1,8 +1,7 @@
 {
-  "name": "Sri Sanatana Dharma Studio Pro",
-  "description": "Premium Vedic Content Hub with Personal Branding and QR integration.",
+  "name": "Sri Sanatana Dharma Studio Pro (8K)",
+  "description": "Premium High-Resolution Vedic Content Hub with Dynamic Branding.",
   "requestFramePermissions": [
-    "camera",
     "microphone"
   ]
 }

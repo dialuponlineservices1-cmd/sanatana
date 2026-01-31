@@ -1,21 +1,17 @@
 
 export enum AppTab {
   GENERATOR = 'GENERATOR',
-  MAHARSHIS = 'MAHARSHIS',
-  TEMPLES = 'TEMPLES',
-  PANDUGALU = 'PANDUGALU',
-  SPECIAL_DAYS = 'SPECIAL_DAYS',
+  DHARMA_HUB = 'DHARMA_HUB',
+  SANATANA_DHARMA = 'SANATANA_DHARMA',
+  SAMSAYA_SAMADHANAM = 'SAMSAYA_SAMADHANAM',
+  RISHI_HUB = 'RISHI_HUB',
+  VASTU = 'VASTU',
   MORAL_STORIES = 'MORAL_STORIES',
   KIDS_STORIES = 'KIDS_STORIES',
-  DAILY_QUOTES = 'DAILY_QUOTES',
-  DHARMA_QA = 'DHARMA_QA',
-  ASTROLOGY = 'ASTROLOGY',
-  JATHAKAM = 'JATHAKAM',
-  VASTU = 'VASTU',
-  SANKHYA = 'SANKHYA',
+  PANDUGALU = 'PANDUGALU',
+  SPECIAL_DAYS = 'SPECIAL_DAYS',
   LIBRARY = 'LIBRARY',
   PANCHANGAM = 'PANCHANGAM',
-  VEDIC_HUB = 'VEDIC_HUB',
   AI_CHAT = 'AI_CHAT',
   BRANDING = 'BRANDING'
 }
@@ -28,18 +24,27 @@ export interface PostContent {
   sloka?: string;
   body: string;
   conclusion: string;
-  rituals?: string;
   tag: string;
   slogan: string;
-  imageUrl?: string;
-  whatsappFormat?: string;
+  backgroundKeyword: string;
+  whatsappFormat: string;
   authorName?: string;
   authorPhone?: string;
   authorRole?: string;
   qrUrl?: string;
   authorPhotoUrl?: string;
-  isRahasya?: boolean;
-  groupName?: string;
+  location?: string;
+}
+
+export interface SamsayaResult {
+  problemSummary: string;
+  scriptureSource: string; // Ramayana / Mahabharatha / Gita
+  context: string; // Historical event context
+  sloka: string;
+  meaning: string;
+  solution: string;
+  divineMessage: string;
+  backgroundKeyword: string;
 }
 
 export interface Branding {
@@ -48,35 +53,16 @@ export interface Branding {
   role: string;
   photoUrl: string;
   qrUrl: string;
-  groupName?: string;
+  location: string;
 }
-
-export type ScriptureCategory = 
-  | 'Veda' 
-  | 'Upanishad' 
-  | 'Purana' 
-  | 'Itihasa' 
-  | 'Tantra' 
-  | 'Agama' 
-  | 'Sutra' 
-  | 'Stotram' 
-  | 'Siddhar' 
-  | 'Darshana' 
-  | 'Secret' 
-  | 'Smriti' 
-  | 'Aghora'
-  | 'Yoga'
-  | 'Vedanga'
-  | 'Architecture'
-  | 'Vastu';
 
 export interface Scripture {
   id: string;
   name: string;
   description: string;
   icon: string;
-  category: ScriptureCategory;
-  rahasyaLevel: number; // 1-10
+  category: string;
+  rahasyaLevel: number;
 }
 
 export interface PresetItem {
@@ -136,12 +122,10 @@ export interface JathakamResult {
     lagnam: string;
     yogam: string;
   };
-  grahaNilaya: Array<{ graha: string; raasi: string; position: string }>;
   predictions: {
     character: string;
     career: string;
     health: string;
     remedies: string;
   };
-  fullReport: string;
 }
