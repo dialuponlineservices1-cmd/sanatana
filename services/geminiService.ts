@@ -28,7 +28,8 @@ export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResul
       }
     }
   });
-  return JSON.parse(response.text.trim() || '{}') as RaasiResult;
+  const text = response.text || '{}';
+  return JSON.parse(text.trim()) as RaasiResult;
 };
 
 // Numerology Logic
@@ -53,11 +54,11 @@ export const generateNumerologyReport = async (name: string, dob: string): Promi
       }
     }
   });
-  return JSON.parse(response.text.trim() || '{}') as NumerologyResult;
+  const text = response.text || '{}';
+  return JSON.parse(text.trim()) as NumerologyResult;
 };
 
 // Jathakam Logic
-// Added missing function to handle full Vedic Astrology calculations
 export const generateFullJathakam = async (name: string, dob: string, time: string, place: string): Promise<JathakamResult> => {
   const ai = getAI();
   const response = await ai.models.generateContent({
@@ -101,10 +102,11 @@ export const generateFullJathakam = async (name: string, dob: string, time: stri
       }
     }
   });
-  return JSON.parse(response.text.trim() || '{}') as JathakamResult;
+  const text = response.text || '{}';
+  return JSON.parse(text.trim()) as JathakamResult;
 };
 
-// Generate content for spiritual posters or stories with deep reasoning
+// Generate content for spiritual posters or stories
 export const generateSpiritualPost = async (
   prompt: string, 
   category: string, 
@@ -123,17 +125,6 @@ export const generateSpiritualPost = async (
     1. If Category is 'NITHI_KATHALU': Focus on moral values, Panchatantra style, and clear wisdom.
     2. If Category is 'PILLALA_KATHALU': Use simple, engaging, magical, and colorful language.
     3. If Category is 'MOTIVATIONAL_KATHALU': Focus on willpower, hard work, success, and powerful inspiration.
-    4. If Category is 'Dharma' or 'Spiritual': Use deep Vedic vocabulary.
-    
-    TASK: Generate data for a professional 8K spiritual poster or an immersive long-form story.
-    - Title: Bold, divine headline.
-    - Subtitle: Profound philosophical context.
-    - Tag: Divine source or category.
-    - Slogan: Impactful ribbon text.
-    - Sloka: Sanskrit sloka only if 'includeSloka' is true.
-    - Body: Deeply researched, scholarly, and impactful matter.
-    - Conclusion: Moral or powerful takeaway message.
-    - BackgroundKeyword: One specific English keyword for image selection.
     
     Output format: JSON.
   `;
@@ -163,7 +154,8 @@ export const generateSpiritualPost = async (
     }
   });
 
-  return JSON.parse(response.text.trim() || '{}') as PostContent;
+  const text = response.text || '{}';
+  return JSON.parse(text.trim()) as PostContent;
 };
 
 export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
@@ -189,7 +181,8 @@ export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
       }
     }
   });
-  return JSON.parse(response.text.trim() || '{}') as SamsayaResult;
+  const text = response.text || '{}';
+  return JSON.parse(text.trim()) as SamsayaResult;
 };
 
 export const getDailyPanchangam = async (date: string): Promise<PanchangamData> => {
@@ -224,5 +217,6 @@ export const getDailyPanchangam = async (date: string): Promise<PanchangamData> 
       }
     }
   });
-  return JSON.parse(response.text.trim() || '{}') as PanchangamData;
+  const text = response.text || '{}';
+  return JSON.parse(text.trim()) as PanchangamData;
 };
