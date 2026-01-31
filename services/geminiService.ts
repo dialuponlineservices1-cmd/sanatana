@@ -4,8 +4,8 @@ import { PostContent, PanchangamData, JathakamResult, OutputMode, SamsayaResult,
 
 const getAI = () => {
   const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("API_KEY_MISSING: Vercel/Local Environment variables లో API_KEY సెట్ చేయబడలేదు.");
+  if (!apiKey || apiKey === "undefined") {
+    throw new Error("API_KEY_MISSING: Vercel సెట్టింగ్స్ లో API_KEY కనిపించడం లేదు. దయచేసి Env Variables చెక్ చేయండి.");
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -13,6 +13,7 @@ const getAI = () => {
 const cleanJSONResponse = (text: string): string => {
   if (!text) return "{}";
   try {
+    // Look for the first { and last } to extract JSON from possible conversational padding
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     return jsonMatch ? jsonMatch[0] : text.trim();
   } catch (e) {
@@ -20,6 +21,10 @@ const cleanJSONResponse = (text: string): string => {
   }
 };
 
+/**
+ * Unified caller with model fallback. 
+ * If Pro fails, tries Flash. 
+ */
 async function callGemini(params: {
   contents: string;
   systemInstruction?: string;
@@ -27,38 +32,51 @@ async function callGemini(params: {
   usePro?: boolean;
 }) {
   const ai = getAI();
-  const modelName = params.usePro ? 'gemini-3-pro-preview' : 'gemini-2.5-flash';
+  // Primary model choices based on task complexity
+  const primaryModel = params.usePro ? 'gemini-3-pro-preview' : 'gemini-3-flash-preview';
+  const fallbackModel = 'gemini-3-flash-preview';
   
-  try {
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents: [{ parts: [{ text: params.contents }] }],
-      config: {
-        systemInstruction: params.systemInstruction,
-        responseMimeType: 'application/json',
-        responseSchema: params.schema,
-        thinkingConfig: params.usePro ? { thinkingBudget: 16384 } : undefined
-      }
-    });
-
-    const text = cleanJSONResponse(response.text ?? "{}");
-    return JSON.parse(text);
-  } catch (err: any) {
-    console.error(`Gemini Error (${modelName}):`, err);
-    
-    // Fallback if Pro fails or is unavailable
-    if (params.usePro) {
-      console.log("Pro failed, falling back to Flash...");
-      return callGemini({ ...params, usePro: false });
-    }
-    
-    throw err;
+  const modelsToTry = [primaryModel];
+  if (primaryModel !== fallbackModel) {
+    modelsToTry.push(fallbackModel);
   }
+
+  let lastError: any = null;
+
+  for (const modelName of modelsToTry) {
+    try {
+      console.log(`Calling Gemini with model: ${modelName}`);
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: [{ parts: [{ text: params.contents }] }],
+        config: {
+          systemInstruction: params.systemInstruction,
+          responseMimeType: 'application/json',
+          responseSchema: params.schema,
+          // Only use thinking for Pro model
+          thinkingConfig: modelName.includes('pro') ? { thinkingBudget: 16384 } : undefined
+        }
+      });
+
+      const text = cleanJSONResponse(response.text ?? "{}");
+      return JSON.parse(text);
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`Model ${modelName} failed. Details:`, err.message);
+      
+      // If it's a quota or key error, no point in retrying other models
+      if (err.message?.includes('429') || err.message?.includes('403') || err.message?.includes('API_KEY')) {
+        throw err;
+      }
+    }
+  }
+
+  throw lastError || new Error("అన్ని AI మోడల్స్ విఫలమయ్యాయి. కనెక్షన్ చెక్ చేయండి.");
 }
 
 export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResult> => {
   return await callGemini({
-    contents: `Detailed Vedic Horoscope for ${raasi} raasi in Telugu. Include prediction, health, wealth, luckyNumber, remedy.`,
+    contents: `Detailed Vedic Horoscope for ${raasi} raasi in Telugu for today. Include specific predictions.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -76,7 +94,7 @@ export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResul
 
 export const generateNumerologyReport = async (name: string, dob: string): Promise<NumerologyResult> => {
   return await callGemini({
-    contents: `Numerology report for ${name || 'User'} born on ${dob} in Telugu.`,
+    contents: `Detailed Numerology report for ${name || 'User'} born on ${dob} in Telugu script.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -95,7 +113,7 @@ export const generateNumerologyReport = async (name: string, dob: string): Promi
 export const generateFullJathakam = async (name: string, dob: string, time: string, place: string): Promise<JathakamResult> => {
   return await callGemini({
     usePro: true,
-    contents: `Full Vedic Jathakam for ${name}, DOB: ${dob}, Time: ${time}, Place: ${place}. Language: Telugu.`,
+    contents: `Complete Vedic Birth Chart Analysis (Jathakam) for ${name}, DOB: ${dob}, Time: ${time}, Place: ${place}. Language: Telugu.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -130,8 +148,8 @@ export const generateSpiritualPost = async (
 ): Promise<PostContent> => {
   return await callGemini({
     usePro: true,
-    systemInstruction: "You are a Supreme Dharmic Scholar. Output scholarly Telugu JSON.",
-    contents: `Generate ${outputMode} content. Topic: ${prompt}. Category: ${category}. Sloka: ${includeSloka}. Output clean JSON.`,
+    systemInstruction: "You are a Dharmic Scholar. Always output scholarly Telugu content in clean JSON format.",
+    contents: `Task: Generate ${outputMode}. Topic: ${prompt}. Category: ${category}. Include Sloka: ${includeSloka}.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -153,7 +171,7 @@ export const generateSpiritualPost = async (
 export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
   return await callGemini({
     usePro: true,
-    contents: `Provide scriptural solution in Telugu for: ${query}`,
+    contents: `Solve this spiritual doubt with Vedic references: ${query}. Use Telugu script.`,
     schema: {
       type: Type.OBJECT,
       properties: {
@@ -173,7 +191,7 @@ export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
 
 export const getDailyPanchangam = async (date: string): Promise<PanchangamData> => {
   return await callGemini({
-    contents: `Daily Telugu Panchangam for ${date}.`,
+    contents: `Full Telugu Panchangam data for ${date}.`,
     schema: {
       type: Type.OBJECT,
       properties: {

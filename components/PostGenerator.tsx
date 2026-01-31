@@ -108,11 +108,13 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
       let errorMsg = "క్షమించాలి, కంటెంట్ సిద్ధం చేయలేకపోయాము.";
       
       if (e.message?.includes('API_KEY_MISSING')) {
-        errorMsg += "\n\nగమనిక: Vercel Settings లో API_KEY సెట్ చేయబడలేదు.";
+        errorMsg = "API కీ లోపం! Vercel Settings -> Env Variables లో 'API_KEY' యాడ్ చేసి Redeploy చేయండి.";
       } else if (e.message?.includes('429')) {
-        errorMsg += "\n\nగమనిక: మీ API కోటా ముగిసింది. దయచేసి కొద్దిసేపు ఆగి మళ్ళీ ప్రయత్నించండి.";
+        errorMsg = "పరిమితి మించిపోయింది (Quota Exceeded). కొద్దిసేపు ఆగి ప్రయత్నించండి.";
+      } else if (e.message?.includes('403')) {
+        errorMsg = "API కీ చెల్లదు (Invalid Key). సరైన కీని ఉపయోగించండి.";
       } else {
-        errorMsg += `\n\nవివరాలు: ${e.message || "Unknown Connection Error"}`;
+        errorMsg += `\nవివరాలు: ${e.message || "Unknown error"}`;
       }
       
       alert(errorMsg);
