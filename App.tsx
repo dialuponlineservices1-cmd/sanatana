@@ -16,44 +16,56 @@ import { validateApiKey, getApiKey } from './services/geminiService';
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>(AppTab.GENERATOR);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [apiKey, setApiKey] = useState(getApiKey());
   const [isKeyValid, setIsKeyValid] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkKey = async () => {
       const currentKey = getApiKey();
-      if (currentKey) {
+      if (currentKey && currentKey !== "") {
         const valid = await validateApiKey(currentKey);
         setIsKeyValid(valid);
-        setApiKey(currentKey);
       } else {
         setIsKeyValid(false);
       }
     };
-    checkKey();
     
-    // Watch for key changes injected by the platform
-    const interval = setInterval(checkKey, 3000);
+    checkKey();
+    const interval = setInterval(checkKey, 5000);
     return () => clearInterval(interval);
   }, []);
 
   const handleEnterKey = async () => {
+    // 1. Try Platform Dialog
     if (window.aistudio && typeof window.aistudio.openSelectKey === 'function') {
-      await window.aistudio.openSelectKey();
-      // Assume success and refresh to pick up the new process.env.API_KEY
-      setTimeout(() => window.location.reload(), 500);
-    } else {
-      alert("API Key selection is available in the hosted environment.");
+      try {
+        await window.aistudio.openSelectKey();
+        setTimeout(() => window.location.reload(), 1000);
+        return;
+      } catch (err) {}
+    }
+
+    // 2. Fallback for Vercel/External: Manual Prompt
+    const manualKey = window.prompt("Gemini API Key ఎంటర్ చేయండి (Enter your Gemini API Key):");
+    if (manualKey) {
+      localStorage.setItem('internal_api_key', manualKey.trim());
+      const valid = await validateApiKey(manualKey.trim());
+      if (valid) {
+        setIsKeyValid(true);
+        window.location.reload();
+      } else {
+        alert("Invalid API Key. దయచేసి సరైన కీని ఎంటర్ చేయండి.");
+        localStorage.removeItem('internal_api_key');
+      }
     }
   };
 
   const navItems = [
-    { tab: AppTab.GENERATOR, icon: 'auto_awesome_mosaic', label: 'డిజైన్ స్టూడియో', color: 'bg-orange-600' },
+    { tab: AppTab.GENERATOR, icon: 'auto_awesome', label: 'డిజైన్ స్టూడియో', color: 'bg-orange-600' },
     { tab: AppTab.LIVE_CONSULTATION, icon: 'settings_voice', label: 'లైవ్ కన్సల్టేషన్', color: 'bg-red-600' },
-    { tab: AppTab.RAASI_PHALALU, icon: 'brightness_high', label: 'రాశి ఫలాలు', color: 'bg-purple-700' },
+    { tab: AppTab.RAASI_PHALALU, icon: 'brightness_7', label: 'రాశి ఫలాలు', color: 'bg-purple-700' },
     { tab: AppTab.NUMEROLOGY, icon: 'calculate', label: 'సంఖ్యాశాస్త్రం', color: 'bg-cyan-700' },
     { tab: AppTab.NITHI_KATHALU, icon: 'menu_book', label: 'నీతి కథలు', color: 'bg-amber-700' },
-    { tab: AppTab.PILLALA_KATHALU, icon: 'child_care', label: 'పిల్లల కథలు', color: 'bg-emerald-600' },
+    { tab: AppTab.PILLALA_KATHALU, icon: 'face', label: 'పిల్లల కథలు', color: 'bg-emerald-600' },
     { tab: AppTab.MOTIVATIONAL_KATHALU, icon: 'bolt', label: 'స్ఫూర్తి కథలు', color: 'bg-rose-700' },
     { tab: AppTab.PANDUGALU, icon: 'festival', label: 'పండుగలు - విశేషాలు', color: 'bg-pink-600' },
     { tab: AppTab.PANCHANGAM, icon: 'event_note', label: 'పంచాంగం', color: 'bg-yellow-600' },
@@ -66,16 +78,15 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-[#020617] text-slate-200 overflow-hidden font-sans">
-      {/* Premium Sidebar */}
       <aside className={`${isSidebarOpen ? 'w-[380px]' : 'w-24'} bg-[#0f172a] border-r border-white/5 transition-all duration-300 flex flex-col z-30 shadow-[10px_0_40px_rgba(0,0,0,0.6)]`}>
-        <div className="p-10 flex items-center gap-6 border-b border-white/5 bg-[#1e293b]/30">
-          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 via-red-600 to-amber-500 rounded-2xl flex items-center justify-center shadow-2xl shrink-0 group hover:rotate-12 transition-transform">
+        <div className="p-8 flex items-center gap-6 border-b border-white/5 bg-[#1e293b]/30">
+          <div className="w-16 h-16 bg-gradient-to-br from-orange-500 via-red-600 to-amber-500 rounded-2xl flex items-center justify-center shadow-2xl shrink-0 group hover:rotate-6 transition-transform">
             <span className="material-icons text-white text-4xl">temple_hindu</span>
           </div>
           {isSidebarOpen && (
             <div className="overflow-hidden animate-in fade-in slide-in-from-left-4">
-              <h1 className="cinzel font-black text-2xl text-orange-500 tracking-tighter leading-none whitespace-nowrap uppercase">Bhaskara PRO</h1>
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Vedic Creative Hub</p>
+              <h1 className="cinzel font-black text-2xl text-orange-500 tracking-tighter leading-none whitespace-nowrap uppercase">Bhaskara Hub</h1>
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-2">Internal Studio Pro</p>
             </div>
           )}
         </div>
@@ -93,22 +104,21 @@ const App: React.FC = () => {
             >
               <span className={`material-icons text-3xl ${activeTab === item.tab ? 'text-white' : 'text-slate-500 group-hover:text-orange-400'}`}>{item.icon}</span>
               {isSidebarOpen && <span className="tiro text-xl whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>}
-              {activeTab === item.tab && <div className="absolute left-0 w-2 h-10 bg-white/50 rounded-full"></div>}
+              {activeTab === item.tab && <div className="absolute left-0 w-2 h-10 bg-white/40 rounded-full"></div>}
             </button>
           ))}
         </nav>
       </aside>
 
       <main className="flex-1 flex flex-col overflow-hidden relative bg-[#020617]">
-        {/* Modern Header with "ENTER API KEY" prominently featured */}
         <header className="h-24 bg-[#0f172a]/95 backdrop-blur-3xl border-b border-white/5 flex items-center justify-between px-12 z-20 shadow-2xl">
           <div className="flex items-center gap-10">
-            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-400 p-3 hover:bg-white/5 rounded-2xl transition-all border border-transparent hover:border-white/10">
+            <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-400 p-3 hover:bg-white/5 rounded-2xl transition-all">
               <span className="material-icons text-5xl">{isSidebarOpen ? 'keyboard_double_arrow_left' : 'menu'}</span>
             </button>
-            <div className="h-10 w-px bg-white/10"></div>
+            <div className="h-10 w-px bg-white/10 hidden md:block"></div>
             <h2 className="text-3xl font-black tiro text-slate-100 uppercase tracking-tighter flex items-center gap-5">
-              <span className="material-icons text-amber-500 animate-pulse">auto_awesome</span>
+              <span className="material-icons text-orange-500">star_rate</span>
               {navItems.find(i => i.tab === activeTab)?.label}
             </h2>
           </div>
@@ -119,21 +129,20 @@ const App: React.FC = () => {
                className={`flex items-center gap-5 px-10 py-4 rounded-full border-2 transition-all active:scale-95 group relative overflow-hidden ${
                  isKeyValid 
                   ? 'bg-emerald-500/10 border-emerald-500/40 hover:bg-emerald-500/20' 
-                  : 'bg-red-500/10 border-red-500/40 hover:bg-red-500/20 shadow-[0_0_30px_rgba(239,68,68,0.2)]'
+                  : 'bg-orange-500/10 border-orange-500/40 hover:bg-orange-500/20 animate-pulse'
                }`}
              >
-                <div className={`w-4 h-4 rounded-full ${isKeyValid ? 'bg-emerald-500 shadow-[0_0_20px_#10b981]' : 'bg-red-500 animate-ping shadow-[0_0_20px_#ef4444]'}`}></div>
+                <div className={`w-4 h-4 rounded-full ${isKeyValid ? 'bg-emerald-500 shadow-[0_0_20px_#10b981]' : 'bg-orange-500 shadow-[0_0_20px_#f59e0b]'}`}></div>
                 <div className="text-left relative z-10">
-                  <p className="text-[10px] font-black uppercase tracking-widest leading-none text-slate-500 mb-1">Internal Access</p>
-                  <p className="text-xl font-black uppercase tracking-tight text-white">{isKeyValid ? 'AI CONNECTED' : 'ENTER API KEY'}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest leading-none text-slate-500 mb-1">Status: {isKeyValid ? 'Active' : 'Setup'}</p>
+                  <p className="text-xl font-black uppercase tracking-tight text-white">ENTER API KEY</p>
                 </div>
-                <span className="material-icons text-4xl text-slate-400 group-hover:text-amber-500 transition-colors relative z-10">key</span>
-                {!isKeyValid && <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 via-transparent to-red-500/10 animate-shimmer"></div>}
+                <span className="material-icons text-4xl text-slate-400 group-hover:text-amber-500 transition-colors">key</span>
              </button>
              
-             <div className="flex flex-col items-end leading-none border-l border-white/10 pl-10 hidden md:flex">
-                <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.4em] mb-1">Status: Stable</p>
-                <p className="text-2xl font-black text-orange-500 cinzel">PRO v5.6.0</p>
+             <div className="flex flex-col items-end leading-none border-l border-white/10 pl-10 hidden lg:flex">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mb-1">BHASKARA HUB</p>
+                <p className="text-2xl font-black text-orange-500 cinzel tracking-tighter leading-none">PRO EDITION</p>
              </div>
           </div>
         </header>

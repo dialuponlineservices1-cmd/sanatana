@@ -3,13 +3,28 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { PostContent, PanchangamData, JathakamResult, OutputMode, SamsayaResult, NumerologyResult, RaasiResult } from "../types";
 
 /**
- * The API key must be obtained exclusively from the environment variable process.env.API_KEY.
+ * API Key Priority Logic:
+ * 1. Check Profile Settings (localStorage)
+ * 2. Check Vercel/Environment Variable (process.env.API_KEY)
  */
 export const getApiKey = () => {
+  // Check specifically for an manually entered internal key
+  const manualKey = localStorage.getItem('internal_api_key');
+  if (manualKey) return manualKey;
+
+  // Check branding settings
+  const brandingStr = localStorage.getItem('dharma_branding');
+  if (brandingStr) {
+    try {
+      const b = JSON.parse(brandingStr);
+      if (b.apiKey) return b.apiKey;
+    } catch (e) {}
+  }
+
   return process.env.API_KEY || "";
 };
 
-const getAI = () => {
+const getFreshAI = () => {
   const apiKey = getApiKey();
   if (!apiKey) {
     throw new Error("API_KEY_MISSING");
@@ -18,6 +33,7 @@ const getAI = () => {
 };
 
 export const validateApiKey = async (key: string): Promise<boolean> => {
+  if (!key) return false;
   try {
     const ai = new GoogleGenAI({ apiKey: key });
     await ai.models.generateContent({
@@ -51,7 +67,7 @@ async function callGemini(params: {
   schema: any;
   usePro?: boolean;
 }) {
-  const ai = getAI();
+  const ai = getFreshAI();
   const models = params.usePro 
     ? ['gemini-3-pro-preview', 'gemini-3-flash-preview']
     : ['gemini-3-flash-preview', 'gemini-3-flash-lite-latest'];
@@ -60,7 +76,6 @@ async function callGemini(params: {
 
   for (const modelName of models) {
     try {
-      // Use generateContent with model name and string contents directly
       const response = await ai.models.generateContent({
         model: modelName,
         contents: params.contents,
@@ -76,8 +91,11 @@ async function callGemini(params: {
       return JSON.parse(cleanJSONResponse(rawText));
     } catch (err: any) {
       lastError = err;
-      if (err.message?.includes('403') || err.message?.includes('429')) throw err;
-      console.warn(`Model ${modelName} attempt failed: ${err.message}`);
+      if (err.message?.includes('403') || err.message?.includes('401')) {
+        throw new Error("API_KEY_INVALID");
+      }
+      if (err.message?.includes('429')) throw err;
+      console.warn(`Model ${modelName} failed: ${err.message}`);
     }
   }
   throw lastError || new Error("Connection failed.");
