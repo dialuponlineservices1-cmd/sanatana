@@ -28,8 +28,9 @@ export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResul
       }
     }
   });
-  const text = response.text || '{}';
-  return JSON.parse(text.trim()) as RaasiResult;
+  const rawText = response.text;
+  const text = rawText ? rawText.trim() : '{}';
+  return JSON.parse(text) as RaasiResult;
 };
 
 // Numerology Logic
@@ -54,8 +55,9 @@ export const generateNumerologyReport = async (name: string, dob: string): Promi
       }
     }
   });
-  const text = response.text || '{}';
-  return JSON.parse(text.trim()) as NumerologyResult;
+  const rawText = response.text;
+  const text = rawText ? rawText.trim() : '{}';
+  return JSON.parse(text) as NumerologyResult;
 };
 
 // Jathakam Logic
@@ -102,8 +104,9 @@ export const generateFullJathakam = async (name: string, dob: string, time: stri
       }
     }
   });
-  const text = response.text || '{}';
-  return JSON.parse(text.trim()) as JathakamResult;
+  const rawText = response.text;
+  const text = rawText ? rawText.trim() : '{}';
+  return JSON.parse(text) as JathakamResult;
 };
 
 // Generate content for spiritual posters or stories
@@ -154,8 +157,9 @@ export const generateSpiritualPost = async (
     }
   });
 
-  const text = response.text || '{}';
-  return JSON.parse(text.trim()) as PostContent;
+  const rawText = response.text;
+  const text = rawText ? rawText.trim() : '{}';
+  return JSON.parse(text) as PostContent;
 };
 
 export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
@@ -181,8 +185,9 @@ export const solveSamsaya = async (query: string): Promise<SamsayaResult> => {
       }
     }
   });
-  const text = response.text || '{}';
-  return JSON.parse(text.trim()) as SamsayaResult;
+  const rawText = response.text;
+  const text = rawText ? rawText.trim() : '{}';
+  return JSON.parse(text) as SamsayaResult;
 };
 
 export const getDailyPanchangam = async (date: string): Promise<PanchangamData> => {
@@ -217,6 +222,7 @@ export const getDailyPanchangam = async (date: string): Promise<PanchangamData> 
       }
     }
   });
-  const text = response.text || '{}';
-  return JSON.parse(text.trim()) as PanchangamData;
+  const rawText = response.text;
+  const text = rawText ? rawText.trim() : '{}';
+  return JSON.parse(text) as PanchangamData;
 };
