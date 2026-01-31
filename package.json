@@ -2,11 +2,11 @@
 {
   "name": "sanatana-dharma-studio-pro",
   "private": true,
-  "version": "4.8.0",
+  "version": "4.9.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {

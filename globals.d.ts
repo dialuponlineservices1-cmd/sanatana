@@ -1,12 +1,8 @@
 
-// Augment the existing global Process and ProcessEnv interfaces to avoid redeclaration conflicts
-// with existing definitions (e.g., from @types/node or other environment types).
-interface ProcessEnv {
-  API_KEY: string;
-}
-
-interface Process {
-  env: ProcessEnv;
+declare namespace NodeJS {
+  interface ProcessEnv {
+    API_KEY: string;
+  }
 }
 
 interface Window {
@@ -14,3 +10,5 @@ interface Window {
   SpeechRecognition: any;
   webkitSpeechRecognition: any;
 }
+
+// Fix: Removed redundant 'process' declaration that was causing type conflicts with global NodeJS types.
