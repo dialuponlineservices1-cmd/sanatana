@@ -4,20 +4,19 @@ import { PostContent, PanchangamData, JathakamResult, OutputMode, SamsayaResult,
 
 /**
  * API Key Priority Logic:
- * 1. Check Profile Settings (localStorage)
- * 2. Check Vercel/Environment Variable (process.env.API_KEY)
+ * 1. Check Manual Entry in localStorage (internal_api_key)
+ * 2. Check Branding Settings (dharma_branding)
+ * 3. Check Platform Environment Variable (process.env.API_KEY)
  */
 export const getApiKey = () => {
-  // Check specifically for an manually entered internal key
   const manualKey = localStorage.getItem('internal_api_key');
-  if (manualKey) return manualKey;
+  if (manualKey && manualKey.trim() !== "") return manualKey.trim();
 
-  // Check branding settings
   const brandingStr = localStorage.getItem('dharma_branding');
   if (brandingStr) {
     try {
       const b = JSON.parse(brandingStr);
-      if (b.apiKey) return b.apiKey;
+      if (b.apiKey && b.apiKey.trim() !== "") return b.apiKey.trim();
     } catch (e) {}
   }
 
@@ -32,17 +31,22 @@ const getFreshAI = () => {
   return new GoogleGenAI({ apiKey });
 };
 
+/**
+ * Validates the API key by making a minimal request.
+ * Uses 'gemini-3-flash-preview' as it's the most reliable standard model.
+ */
 export const validateApiKey = async (key: string): Promise<boolean> => {
   if (!key) return false;
   try {
     const ai = new GoogleGenAI({ apiKey: key });
     await ai.models.generateContent({
-      model: 'gemini-3-flash-lite-latest',
+      model: 'gemini-3-flash-preview',
       contents: 'hi',
       config: { maxOutputTokens: 1 }
     });
     return true;
   } catch (e) {
+    console.error("API Key Validation Failed:", e);
     return false;
   }
 };
@@ -68,9 +72,10 @@ async function callGemini(params: {
   usePro?: boolean;
 }) {
   const ai = getFreshAI();
+  // Using correct model names from the documentation guidelines
   const models = params.usePro 
     ? ['gemini-3-pro-preview', 'gemini-3-flash-preview']
-    : ['gemini-3-flash-preview', 'gemini-3-flash-lite-latest'];
+    : ['gemini-3-flash-preview', 'gemini-flash-lite-latest'];
 
   let lastError: any = null;
 
@@ -91,14 +96,15 @@ async function callGemini(params: {
       return JSON.parse(cleanJSONResponse(rawText));
     } catch (err: any) {
       lastError = err;
-      if (err.message?.includes('403') || err.message?.includes('401')) {
+      const errMsg = err.message || "";
+      if (errMsg.includes('403') || errMsg.includes('401') || errMsg.includes('API_KEY_INVALID')) {
         throw new Error("API_KEY_INVALID");
       }
-      if (err.message?.includes('429')) throw err;
-      console.warn(`Model ${modelName} failed: ${err.message}`);
+      if (errMsg.includes('429')) throw new Error("API_LIMIT_REACHED");
+      console.warn(`Model ${modelName} failed: ${errMsg}`);
     }
   }
-  throw lastError || new Error("Connection failed.");
+  throw lastError || new Error("CONNECTION_FAILED");
 }
 
 export const generateRaasiPrediction = async (raasi: string): Promise<RaasiResult> => {
