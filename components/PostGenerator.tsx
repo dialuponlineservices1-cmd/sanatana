@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { generateSpiritualPost } from '../services/geminiService';
 import { PostContent, AppTab, Branding, OutputMode } from '../types';
-import { SCRIPTURES, MAHARSHIS_LIST, FESTIVALS_LIST, VASTU_LIST, MORAL_STORIES_LIST, BIG_THREE_LIST } from '../constants';
+import { SCRIPTURES, MAHARSHIS_LIST, FESTIVALS_LIST, VASTU_LIST, MORAL_STORIES_LIST, BIG_THREE_LIST, RAMAYANA_SECTIONS, MAHABHARATHA_SECTIONS, GITA_SECTIONS } from '../constants';
 
 interface PostGeneratorProps {
   mode: AppTab;
@@ -43,16 +43,27 @@ const PostGenerator: React.FC<PostGeneratorProps> = ({ mode }) => {
   }, []);
 
   const toggleVoice = () => {
-    if (!recognitionRef.current) return;
+    if (!recognitionRef.current) {
+      alert("క్షమించండి, మీ బ్రౌజర్ వాయిస్ రికగ్నిషన్‌కు మద్దతు ఇవ్వదు.");
+      return;
+    }
     if (isListening) recognitionRef.current.stop();
-    else recognitionRef.current.start();
+    else {
+      try {
+        recognitionRef.current.start();
+      } catch (e) {
+        console.error("Speech recognition start failed:", e);
+      }
+    }
   };
 
   const currentList = useMemo(() => {
     let items: any[] = [];
-    if (mode === AppTab.GENERATOR) items = [...BIG_THREE_LIST, ...SCRIPTURES];
+    if (mode === AppTab.GENERATOR) {
+      items = [...BIG_THREE_LIST, ...RAMAYANA_SECTIONS, ...MAHABHARATHA_SECTIONS, ...GITA_SECTIONS, ...SCRIPTURES];
+    }
     else if (mode === AppTab.DHARMA_HUB) {
-      items = [...BIG_THREE_LIST, ...FESTIVALS_LIST, ...SCRIPTURES.filter(s => s.category === 'Purana')];
+      items = [...RAMAYANA_SECTIONS, ...MAHABHARATHA_SECTIONS, ...GITA_SECTIONS, ...FESTIVALS_LIST];
     }
     else if (mode === AppTab.SANATANA_DHARMA) {
       items = [...MAHARSHIS_LIST, ...SCRIPTURES.filter(s => s.category === 'Veda' || s.category === 'Upanishad')];

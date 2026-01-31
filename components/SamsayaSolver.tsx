@@ -32,6 +32,22 @@ const SamsayaSolver: React.FC = () => {
     }
   }, []);
 
+  const toggleVoice = () => {
+    if (!recognitionRef.current) {
+      alert("క్షమించండి, మీ బ్రౌజర్ వాయిస్ రికగ్నిషన్‌కు మద్దతు ఇవ్వదు.");
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      try {
+        recognitionRef.current.start();
+      } catch (e) {
+        console.error("Speech recognition start failed:", e);
+      }
+    }
+  };
+
   const handleSolve = async (forcedQuery?: string) => {
     const q = forcedQuery || query;
     if (!q.trim()) return;
@@ -85,7 +101,7 @@ const SamsayaSolver: React.FC = () => {
             className="w-full bg-white/10 border-8 border-indigo-400/30 rounded-[6rem] p-20 text-5xl tiro text-white placeholder:text-indigo-400/50 outline-none focus:border-indigo-400 min-h-[350px] text-center leading-relaxed"
           />
           <button 
-            onClick={() => isListening ? recognitionRef.current.stop() : recognitionRef.current.start()}
+            onClick={toggleVoice}
             className={`absolute right-12 bottom-12 w-36 h-36 rounded-full flex items-center justify-center transition-all shadow-2xl border-4 border-white/10 ${isListening ? 'bg-red-600 animate-pulse ring-[30px] ring-red-600/10' : 'bg-indigo-600 hover:bg-indigo-500'}`}
           >
             <span className="material-icons text-[100px] text-white">{isListening ? 'mic' : 'mic_none'}</span>
